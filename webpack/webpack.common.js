@@ -5,8 +5,6 @@ const srcTypescriptDir = '../src/typescript/';
 
 module.exports = {
     entry: {
-        popup: path.join(__dirname, srcTypescriptDir + 'popup.ts'),
-        options: path.join(__dirname, srcTypescriptDir + 'options.ts'),
         background: path.join(__dirname, srcTypescriptDir + 'background.ts'),
         content_script: path.join(__dirname, srcTypescriptDir + 'content_script.ts')
     },
