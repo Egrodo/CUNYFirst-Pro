@@ -38,7 +38,7 @@ async function fetchAndSendData(requestsList: [string, string][], tabId: number)
     const cachedProfRatings = profRatings;
     const profRatingsList: profRating[] = [];
 
-    // TODO: Change this to work in parallel with Promises.all
+    // TODO: The cache should expire after some time.
     for (const request of requestsList) {
       const [fullName, rmpLink] = request;
       if (fullName === 'Staff') {
