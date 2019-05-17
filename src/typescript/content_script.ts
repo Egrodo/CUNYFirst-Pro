@@ -1,19 +1,9 @@
+import { debounce, nodeSearchHelper } from './helpers';
+
 interface profRating {
     rating: string;
     rmpLink: string;
 };
-
-// Helper function to debounce onMutate calls.
-const debounce = (delay: number, fn: Function) => {
-    let timerId;
-    return ((...args) => {
-        if (timerId) clearTimeout(timerId);
-        timerId = setTimeout(() => {
-            fn(...args);
-            timerId = null;
-        }, delay);
-    });
-}
 
 // When the window loads, wait for the iframe to load then add a MutationObserver to watch for changes.
 window.addEventListener('load', (): void => {
@@ -24,7 +14,6 @@ window.addEventListener('load', (): void => {
     function onMutate(): void {
         if (checkIfSearchPage()) {
             const profNodeList: NodeList = findProfNodes();
-            // Debounce this...
             getThenDisplayRatings(profNodeList);
         }
     }
@@ -69,17 +58,8 @@ window.addEventListener('load', (): void => {
         chrome.runtime.onMessage.addListener((ratingsList => displayRatings(ratingsList, profNodeList)));
     }
 
-    const nodeSearchHelper = (parent: Element): boolean => {
-        // Use TreeWalker to check if the ratings element already exists
-        const walker = document.createTreeWalker(parent, NodeFilter.SHOW_ELEMENT);
-        while (walker.nextNode()) {
-            if (walker.currentNode.textContent === 'Rating') return true;
-        }
-        return false;
-    };
-
+    // Take a ratingsList and matching profNode list and display the ratings
     function displayRatings(ratingsList: profRating[], profNodes: NodeList): void {
-        console.log('displayRatings call', profNodes.length);
         // Disconnect the observer before doing any DOM manip. It'll reconnect on next load.
         observer.disconnect();
 
@@ -87,7 +67,7 @@ window.addEventListener('load', (): void => {
         profNodes.forEach((node, i) => {
             let parent = node.parentNode.parentNode;
             // In cases where the content is mutated but the page isn't changed, check if we've already added the ratings before adding again.
-            if (nodeSearchHelper(parent.parentElement.parentElement)) return;
+            if (nodeSearchHelper(parent.parentElement.parentElement, 'Rating')) return;
 
             console.log('Adding ratings');
             // First add the ratings table cell:
