@@ -6,7 +6,8 @@ const srcTypescriptDir = '../src/typescript/';
 module.exports = {
     entry: {
         background: path.join(__dirname, srcTypescriptDir + 'background.ts'),
-        content_script: path.join(__dirname, srcTypescriptDir + 'content_script.ts')
+        content_script: path.join(__dirname, srcTypescriptDir + 'content_script.ts'),
+        options: path.join(__dirname, srcTypescriptDir + 'options.ts')
     },
     output: {
         path: path.join(__dirname, '../dist/js'),

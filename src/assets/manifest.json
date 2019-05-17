@@ -5,6 +5,11 @@
   "description": "Adds useful features to the CUNYFirst / Global Search class selection websites.",
   "version": "0.1",
 
+  "options_ui": {
+    "page": "options.html",
+    "chrome_style": true
+  },
+  
   "content_scripts": [
     {
       "matches": ["*://home.cunyfirst.cuny.edu/*"],

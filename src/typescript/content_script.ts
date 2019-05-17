@@ -6,11 +6,12 @@ interface profRating {
     rmpLink: string;
 };
 
+// TODO: Deprecate the options menu in favor of just checking which school you select on the "Enter Search Criteria" page and saving that.
+
 // When the window loads, wait for the iframe to load then add a MutationObserver to watch for changes.
 window.addEventListener('load', (): void => {
     const iframe = document.getElementById('ptifrmtgtframe') as HTMLIFrameElement;
     let observer: MutationObserver; // Putting this here so I can disconnect it before I do DOM manipulation.
-    const schoolId = '222'; // TODO: Extract this to some options menu or something.
 
     function onMutate(): void {
         if (checkIfSearchPage()) {
@@ -40,16 +41,18 @@ window.addEventListener('load', (): void => {
 
     // Take a list of profs and get the ratings for each from RMP. 
     function getThenDisplayRatings(profNodeList: NodeList): void {
-        const requestsList: [string, string][] = Array.prototype.map.call(profNodeList, prof => {
-            const fullName = prof.innerText.split(' ').join('+');
-            return [fullName, schoolId];
-        });
-        
-        // Send a message to the background script telling it to perform the lookups.
-        chrome.runtime.sendMessage({requestsList});
-        
-        // Receive the lookups and display them.
-        chrome.runtime.onMessage.addListener((ratingsList => displayRatings(ratingsList, profNodeList)));
+        chrome.storage.sync.get(['schoolId'], (({schoolId}) => {
+            const requestsList: [string, string][] = Array.prototype.map.call(profNodeList, prof => {
+                const fullName = prof.innerText.split(' ').join('+');
+                return [fullName, schoolId];
+            });
+            
+            // Send a message to the background script telling it to perform the lookups.
+            chrome.runtime.sendMessage({requestsList});
+            
+            // Receive the lookups and display them.
+            chrome.runtime.onMessage.addListener((ratingsList => displayRatings(ratingsList, profNodeList)));
+        }));
     }
 
     // Take a ratingsList and matching profNode list and display the ratings
