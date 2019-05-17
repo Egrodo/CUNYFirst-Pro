@@ -55,7 +55,6 @@ async function fetchAndSendData(requestsList: [string, string][], tabId: number)
           console.log(`Getting ${fullName} from RMP`);
           const resp: any = await fetch(rmpLink);
           const data: response = await resp.json();
-          
           const currRating: profRating = {
             rating: data.response.docs[0].averageratingscore_rf.toString(),
             rmpLink

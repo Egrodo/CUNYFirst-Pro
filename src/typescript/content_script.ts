@@ -28,11 +28,31 @@ window.addEventListener('load', (): void => {
 
     const schoolId = '222'; // TODO: Extract this to some options menu or something.
 
-    // Take a list of profs and get the ratings for each from RMP. 
-    function getAndDisplayRatings(profList: NodeList): profRating[] {
-        let ratingsList: profRating[] = [];
 
-        const requestsList: [string, string][] = Array.prototype.map.call(profList, prof => {
+    function onMutate(): void {
+        if (checkIfSearchPage()) {
+            const profNodeList: NodeList = findProfNodes();
+            // NOTE: How do I make this functional? onMutate can't be async... Make iife inside actual mutateobserver that calls this maybe?
+            getThenDisplayRatings(profNodeList);
+        }
+    }
+
+    // Finds and returns a list of the professor nodes
+    const findProfNodes = (): NodeList => {
+        let currentProf: HTMLSpanElement = iframe.contentDocument.getElementById('MTG_INSTR$0');
+        
+        if (currentProf) {
+            // Use the attribute selector to get a NodeList of all professor name nodes.
+            const profNodeList: NodeList = iframe.contentDocument.querySelectorAll("[id^=MTG_INSTR]");
+            return profNodeList;
+        } else {
+            console.error('No professor nodes found, but supposedly on the right page?');
+        }
+    }
+
+    // Take a list of profs and get the ratings for each from RMP. 
+    function getThenDisplayRatings(profNodeList: NodeList): void {
+        const requestsList: [string, string][] = Array.prototype.map.call(profNodeList, prof => {
             // Each request is a tuple that keeps track of the name for caching purposes.
 
             const fullName = prof.innerText.split(' ').join('+');
@@ -45,49 +65,26 @@ window.addEventListener('load', (): void => {
         // Send a message to the background script telling it to perform the lookups.
         chrome.runtime.sendMessage({requestsList});
         
-        // Receive the lookups and store them 
-        chrome.runtime.onMessage.addListener((msg => {
-            ratingsList = msg;
-        }));
-
-        const testReturn: profRating[] = [{
-            rating: "3/5",
-            rmpLink: `https://www.ratemyprofessors.com/ShowRatings.jsp?tid=2277836`
-        }];
-
-        return testReturn;
+        // Receive the lookups and display them.
+        chrome.runtime.onMessage.addListener((ratingsList => displayRatings(ratingsList, profNodeList)));
     }
     
+    function displayRatings(ratingsList: profRating[], profNodes: NodeList): void {
+        // rating at ratingsList[i] is for professor at profNodes[i]
+        console.log(`Displaying the ratings:`);
+        console.log(ratingsList);
+    }
+
     // Checks if we're on the search page
-    function checkIfSearchPage(): boolean {
+    const checkIfSearchPage = (): boolean => {
         const titleNode = iframe.contentDocument.getElementById('DERIVED_REGFRM1_TITLE1');
         if (titleNode && titleNode.innerText === 'Search Results') {
             return true;
         } else return false;
     }
 
-    // Finds and returns a list of the professor nodes
-    function findProfNodes(): NodeList {
-        let currentProf: HTMLSpanElement = iframe.contentDocument.getElementById('MTG_INSTR$0');
-        
-        if (currentProf) {
-            // Use the attribute selector to get a NodeList of all professor name nodes.
-            const profList: NodeList = iframe.contentDocument.querySelectorAll("[id^=MTG_INSTR]");
-            return profList;
-        } else {
-            console.error('No professor nodes found, but supposedly on the right page?');
-        }
-    }
-
-    const onMutate = (): void => {
-        if (checkIfSearchPage()) {
-            const profList: NodeList = findProfNodes();
-            getAndDisplayRatings(profList);
-        }
-    }
-
     // Add the mutation observer to watch for page changes inside the iframe.
-    iframe.addEventListener('load', (): void => {
+    iframe.addEventListener('load', function(): void {
         if (!iframe.contentDocument) return;
         const body = iframe.contentDocument.body;
         const observer: MutationObserver = new MutationObserver(onMutate);

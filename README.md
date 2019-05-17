@@ -1,1 +1,1 @@
-CUNYFirst Class Picker Plus
+CUNYFirst Pro
