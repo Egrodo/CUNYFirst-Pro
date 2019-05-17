@@ -21,6 +21,7 @@
   "permissions": [
     "storage",
     "declarativeContent",
-    "tabs"
+    "tabs",
+    "<all_urls>"
   ]
 }

@@ -33,15 +33,20 @@ window.addEventListener('load', (): void => {
         // response > numFound > 
 
         const ratingsList: profRating[] = [];
+
+        // TODO: Migrate to runtime.connect in order to load names asynchronously.
         const requestsList: string[] = profList.map(prof => {
             const fullName = prof.innerText.split(' ').join('+');
             return `https://solr-aws-elb-production.ratemyprofessors.com//solr/rmp/select/?solrformat=true&rows=20&wt=json&q=${fullName}+AND+schoolid_s%3A${schoolId}&defType=edismax&qf=teacherfirstname_t\%5E2000+teacherlastname_t%5E2000+teacherfullname_t%5E2000+autosuggest&bf=pow(total_number_of_ratings_i%2C2.1)&sort=total_number_of_ratings_i+desc&siteName=rmp&rows=20&start=0&fl=pk_id+teacherfirstname_t+teacherlastname_t+total_number_of_ratings_i+averageratingscore_rf+schoolid_s`;
         });
         
-        chrome.runtime.sendMessage({requestsList}, ((response) => {
-            console.log(response);
-        }));
+        // 
+        chrome.runtime.sendMessage({requestsList});
         
+        chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+            console.log(msg);
+        });
+
         const testReturn: profRating[] = [{
             rating: "3/5",
             rmpLink: `https://www.ratemyprofessors.com/ShowRatings.jsp?tid=2277836`
@@ -83,7 +88,7 @@ window.addEventListener('load', (): void => {
             console.log('Mutated to the search page');
             const profList: HTMLSpanElement[] = findProfNodes();
             const ratings: profRating[] = getRatings(profList);
-            console.log(ratings);
+            // console.log(ratings);
         } else console.log('Mutated but not on search page');
     }
 
