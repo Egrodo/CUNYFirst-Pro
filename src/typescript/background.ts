@@ -23,6 +23,7 @@ interface profRatingsCache {
   profFullname: {
     rating: string;
     rmpLink: string;
+    creationTime: number;
   }
 }
 
@@ -31,7 +32,6 @@ interface profRating {
   rmpLink: string;
 };
 
-// TODO: Don't send back the API link, send back the properly formatted link
 async function fetchAndSendData(requestsList: [string, string][], tabId: number) {
   // Get the cached prof names and fill in the cache where needed
   chrome.storage.local.get(['profRatings'], (async ({profRatings}: givenCache) => {
@@ -39,7 +39,6 @@ async function fetchAndSendData(requestsList: [string, string][], tabId: number)
     const cachedProfRatings: profRatingsCache | {} = profRatings || {};
     const profRatingsList: profRating[] = [];
 
-    // TODO: Break this up by size if needed
     for (const request of requestsList) {
       const [fullName, rmpLink] = request;
       if (fullName === 'Staff') {
@@ -49,6 +48,8 @@ async function fetchAndSendData(requestsList: [string, string][], tabId: number)
           rmpLink: ''
         });
       } else if (cachedProfRatings[fullName]) {
+        // TODO: Implement cache expiration
+        
         console.log(`Getting ${fullName} from cache`);
         profRatingsList.push(cachedProfRatings[fullName]);
       } else {
@@ -65,6 +66,7 @@ async function fetchAndSendData(requestsList: [string, string][], tabId: number)
           cachedProfRatings[fullName] = currRating;
           profRatingsList.push(currRating);
         } catch(err) {
+          console.log(`Failed to get ${fullName} from RMP`);
           console.error(err);
           profRatingsList.push({
             rating: "Unknown",
@@ -78,7 +80,6 @@ async function fetchAndSendData(requestsList: [string, string][], tabId: number)
     chrome.tabs.sendMessage(tabId, profRatingsList);
   }));
 }
-
 
 const onMessage = ({requestsList}, sender): void => {
   fetchAndSendData(requestsList, sender.tab.id);

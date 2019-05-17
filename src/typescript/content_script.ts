@@ -3,6 +3,18 @@ interface profRating {
     rmpLink: string;
 };
 
+// Helper function to debounce onMutate calls.
+const debounce = (delay: number, fn: Function) => {
+    let timerId;
+    return ((...args) => {
+        if (timerId) clearTimeout(timerId);
+        timerId = setTimeout(() => {
+            fn(...args);
+            timerId = null;
+        }, delay);
+    });
+}
+
 // When the window loads, wait for the iframe to load then add a MutationObserver to watch for changes.
 window.addEventListener('load', (): void => {
     const iframe = document.getElementById('ptifrmtgtframe') as HTMLIFrameElement;
@@ -12,7 +24,7 @@ window.addEventListener('load', (): void => {
     function onMutate(): void {
         if (checkIfSearchPage()) {
             const profNodeList: NodeList = findProfNodes();
-            // NOTE: How do I make this functional? onMutate can't be async... Make iife inside actual mutateobserver that calls this maybe?
+            // Debounce this...
             getThenDisplayRatings(profNodeList);
         }
     }
@@ -57,21 +69,34 @@ window.addEventListener('load', (): void => {
         chrome.runtime.onMessage.addListener((ratingsList => displayRatings(ratingsList, profNodeList)));
     }
 
+    const nodeSearchHelper = (parent: Element): boolean => {
+        // Use TreeWalker to check if the ratings element already exists
+        const walker = document.createTreeWalker(parent, NodeFilter.SHOW_ELEMENT);
+        while (walker.nextNode()) {
+            if (walker.currentNode.textContent === 'Rating') return true;
+        }
+        return false;
+    };
+
     function displayRatings(ratingsList: profRating[], profNodes: NodeList): void {
+        console.log('displayRatings call', profNodes.length);
         // Disconnect the observer before doing any DOM manip. It'll reconnect on next load.
         observer.disconnect();
 
-        console.log(ratingsList);        
-
         // Rating at ratingsList[i] is for professor at profNodes[i]
         profNodes.forEach((node, i) => {
-            // Go up 2 parent elements, add a new td after current node
+            let parent = node.parentNode.parentNode;
+            // In cases where the content is mutated but the page isn't changed, check if we've already added the ratings before adding again.
+            if (nodeSearchHelper(parent.parentElement.parentElement)) return;
+
+            console.log('Adding ratings');
+            // First add the ratings table cell:
             const td = document.createElement('td') as HTMLTableDataCellElement;
             td.className = 'PSLEVEL3GRIDROW';
             td.setAttribute('align', 'left');
             td.appendChild(document.createElement('div'));
             td.children[0].appendChild(document.createElement('span'));
-            td.children[0].children[0].className = 'PSLONGEDITBOX';
+            td.children[0].children[0].className = 'PSLONGEDITBOX CUNYFIRSTPRO_ADDON';
             // TODO: Make this colourful and shit
             if (ratingsList[i].rmpLink) {
                 td.children[0].children[0].innerHTML = `${ratingsList[i].rating} | <a rel="noreferral noopener" target="_blank" href="${ratingsList[i].rmpLink}">Link</a>`;
@@ -79,18 +104,19 @@ window.addEventListener('load', (): void => {
                 td.children[0].children[0].innerHTML = `Unknown | <a rel="noreferral noopener" target="_blank" href="https://www.ratemyprofessors.com/teacher/create">Add a review?</a>`;
             }
 
-            let parent = node.parentNode.parentNode
             parent.parentNode.insertBefore(td, parent.nextSibling);
 
-            // Then go up up one more from there, down one child, add a new th after the 5th child.
+
+            // Then add the ratings table header:
+            parent = parent.parentNode.parentNode.children[0];
             const th = document.createElement('th') as HTMLTableHeaderCellElement;
             th.className = 'PSLEVEL1GRIDCOLUMNHDR';
             th.setAttribute('scope', 'col'); th.setAttribute('width', '120'); th.setAttribute('align', 'left'); th.setAttribute('abbr', 'Rating');
             th.appendChild(document.createElement('span'));
             th.children[0].setAttribute('title', "RateMyProfessor rating");
+            th.children[0].className = 'CUNYFIRSTPRO_ADDON';
             th.children[0].textContent = 'Rating';
             
-            parent = parent.parentNode.parentNode.children[0];
             parent.insertBefore(th, parent.children[5]);
         });
 
@@ -99,7 +125,7 @@ window.addEventListener('load', (): void => {
 
     function establishObserver(): void {
         const body = iframe.contentDocument.body;
-        observer = new MutationObserver(onMutate);
+        observer = new MutationObserver(debounce(200, onMutate));
         const config: MutationObserverInit = { childList: true, subtree: true };
         observer.observe(body, config);
     }
