@@ -28,24 +28,27 @@ window.addEventListener('load', (): void => {
 
     const schoolId = '222'; // TODO: Extract this to some options menu or something.
 
-    // Take a list of profs and get the ratings for each from RMP. TODO: Cache these
-    function getRatings(profList: HTMLSpanElement[]): profRating[] {
-        // response > numFound > 
+    // Take a list of profs and get the ratings for each from RMP. 
+    function getAndDisplayRatings(profList: NodeList): profRating[] {
+        let ratingsList: profRating[] = [];
 
-        const ratingsList: profRating[] = [];
+        const requestsList: [string, string][] = Array.prototype.map.call(profList, prof => {
+            // Each request is a tuple that keeps track of the name for caching purposes.
 
-        // TODO: Migrate to runtime.connect in order to load names asynchronously.
-        const requestsList: string[] = profList.map(prof => {
             const fullName = prof.innerText.split(' ').join('+');
-            return `https://solr-aws-elb-production.ratemyprofessors.com//solr/rmp/select/?solrformat=true&rows=20&wt=json&q=${fullName}+AND+schoolid_s%3A${schoolId}&defType=edismax&qf=teacherfirstname_t\%5E2000+teacherlastname_t%5E2000+teacherfullname_t%5E2000+autosuggest&bf=pow(total_number_of_ratings_i%2C2.1)&sort=total_number_of_ratings_i+desc&siteName=rmp&rows=20&start=0&fl=pk_id+teacherfirstname_t+teacherlastname_t+total_number_of_ratings_i+averageratingscore_rf+schoolid_s`;
+            return [
+                fullName,
+                `https://solr-aws-elb-production.ratemyprofessors.com//solr/rmp/select/?solrformat=true&rows=20&wt=json&q=${fullName}+AND+schoolid_s%3A${schoolId}&defType=edismax&qf=teacherfirstname_t\%5E2000+teacherlastname_t%5E2000+teacherfullname_t%5E2000+autosuggest&bf=pow(total_number_of_ratings_i%2C2.1)&sort=total_number_of_ratings_i+desc&siteName=rmp&rows=20&start=0&fl=pk_id+teacherfirstname_t+teacherlastname_t+total_number_of_ratings_i+averageratingscore_rf+schoolid_s`
+            ];
         });
         
-        // 
+        // Send a message to the background script telling it to perform the lookups.
         chrome.runtime.sendMessage({requestsList});
         
-        chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-            console.log(msg);
-        });
+        // Receive the lookups and store them 
+        chrome.runtime.onMessage.addListener((msg => {
+            ratingsList = msg;
+        }));
 
         const testReturn: profRating[] = [{
             rating: "3/5",
@@ -64,19 +67,12 @@ window.addEventListener('load', (): void => {
     }
 
     // Finds and returns a list of the professor nodes
-    function findProfNodes(): HTMLSpanElement[] {
+    function findProfNodes(): NodeList {
         let currentProf: HTMLSpanElement = iframe.contentDocument.getElementById('MTG_INSTR$0');
         
         if (currentProf) {
-            // The span elements that contain each professor are marked by the id "MTF_INSTR" and its count.
-            // Use this knowledge to collect a list of all the nodes.
-            const profList: HTMLSpanElement[] = [];
-            let i: number = 0;
-            while (currentProf) {
-                profList.push(currentProf);
-                currentProf = iframe.contentDocument.getElementById(`MTG_INSTR$${++i}`);
-            }
-            
+            // Use the attribute selector to get a NodeList of all professor name nodes.
+            const profList: NodeList = iframe.contentDocument.querySelectorAll("[id^=MTG_INSTR]");
             return profList;
         } else {
             console.error('No professor nodes found, but supposedly on the right page?');
@@ -85,16 +81,13 @@ window.addEventListener('load', (): void => {
 
     const onMutate = (): void => {
         if (checkIfSearchPage()) {
-            console.log('Mutated to the search page');
-            const profList: HTMLSpanElement[] = findProfNodes();
-            const ratings: profRating[] = getRatings(profList);
-            // console.log(ratings);
-        } else console.log('Mutated but not on search page');
+            const profList: NodeList = findProfNodes();
+            getAndDisplayRatings(profList);
+        }
     }
 
     // Add the mutation observer to watch for page changes inside the iframe.
     iframe.addEventListener('load', (): void => {
-        // BUG: If the iframe isn't ready yet, wait until it is. Sometimes contentDocument is null
         if (!iframe.contentDocument) return;
         const body = iframe.contentDocument.body;
         const observer: MutationObserver = new MutationObserver(onMutate);
