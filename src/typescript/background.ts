@@ -31,14 +31,15 @@ interface profRating {
   rmpLink: string;
 };
 
+// BUG: When you get a duplicate professor it doesn't push anything to the list?
 async function fetchAndSendData(requestsList: [string, string][], tabId: number) {
   // Get the cached prof names and fill in the cache where needed
-  chrome.storage.sync.get(['profRatings'], (async ({profRatings}: givenCache) => {
+  chrome.storage.local.get(['profRatings'], (async ({profRatings}: givenCache) => {
     // Get ratings for each request, either from the cache or a new request.
-    const cachedProfRatings = profRatings;
+    const cachedProfRatings: profRatingsCache | {} = profRatings || {};
     const profRatingsList: profRating[] = [];
 
-    // TODO: The cache should expire after some time.
+    // TODO: Break this up by size if needed
     for (const request of requestsList) {
       const [fullName, rmpLink] = request;
       if (fullName === 'Staff') {
@@ -52,7 +53,7 @@ async function fetchAndSendData(requestsList: [string, string][], tabId: number)
         profRatingsList.push(cachedProfRatings[fullName]);
       } else {
         try {
-          console.log(`Getting ${fullName} from RMP`);
+          console.log(`Getting ${fullName} from RMP...`);
           const resp: any = await fetch(rmpLink);
           const data: response = await resp.json();
           const currRating: profRating = {
@@ -65,12 +66,15 @@ async function fetchAndSendData(requestsList: [string, string][], tabId: number)
           profRatingsList.push(currRating);
         } catch(err) {
           console.error(err);
+          profRatingsList.push({
+            rating: "Unknown",
+            rmpLink
+          });
         }
       }
     }
 
-    chrome.storage.sync.set({profRatings: cachedProfRatings});
-
+    chrome.storage.local.set({profRatings: cachedProfRatings});
     chrome.tabs.sendMessage(tabId, profRatingsList);
   }));
 }

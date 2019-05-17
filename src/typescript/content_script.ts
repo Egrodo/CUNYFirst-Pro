@@ -60,8 +60,10 @@ window.addEventListener('load', (): void => {
     function displayRatings(ratingsList: profRating[], profNodes: NodeList): void {
         // Disconnect the observer before doing any DOM manip. It'll reconnect on next load.
         observer.disconnect();
-        // rating at ratingsList[i] is for professor at profNodes[i]
 
+        console.log(ratingsList);        
+
+        // Rating at ratingsList[i] is for professor at profNodes[i]
         profNodes.forEach((node, i) => {
             // Go up 2 parent elements, add a new td after current node
             const td = document.createElement('td') as HTMLTableDataCellElement;
@@ -81,21 +83,28 @@ window.addEventListener('load', (): void => {
             th.setAttribute('scope', 'col'); th.setAttribute('width', '98'); th.setAttribute('align', 'left'); th.setAttribute('abbr', 'Rating');
             th.appendChild(document.createElement('span'));
             th.children[0].setAttribute('title', "RateMyProfessor rating");
+            // TODO: Add link next to this
             th.children[0].textContent = 'Rating';
             
             parent = parent.parentNode.parentNode.children[0];
             parent.insertBefore(th, parent.children[5]);
         });
+
+        establishObserver();
+    }
+
+    function establishObserver(): void {
+        const body = iframe.contentDocument.body;
+        observer = new MutationObserver(onMutate);
+        const config: MutationObserverInit = { childList: true, subtree: true };
+        observer.observe(body, config);
     }
 
     // Add the mutation observer to watch for page changes inside the iframe.
     iframe.addEventListener('load', function(): void {
         if (!iframe.contentDocument) return;
-        const body = iframe.contentDocument.body;
-        observer = new MutationObserver(onMutate);
-        const config: MutationObserverInit = { childList: true, subtree: true };
-        observer.observe(body, config);
-        
+        establishObserver();
+
         iframe.addEventListener('unload', observer.disconnect);
     });
 });
