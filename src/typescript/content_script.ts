@@ -7,15 +7,6 @@
     Brooklyn College: 223
     Lehman College: 228
 */
-// Cache the teachers by their teacher id "pk_id"
-
-// Call this to find professor
-// const reqUrl = `https://solr-aws-elb-production.ratemyprofessors.com//solr/rmp/select/?solrformat=true&rows=20&wt=json&q=${firstName}+${lastName}+AND+schoolid_s%3A${schoolId}&defType=edismax&qf=teacherfirstname_t%5E2000+teacherlastname_t%5E2000+teacherfullname_t%5E2000+autosuggest&bf=pow(total_number_of_ratings_i%2C2.1)&sort=total_number_of_ratings_i+desc&siteName=rmp&rows=20&start=0&fl=pk_id+teacherfirstname_t+teacherlastname_t+total_number_of_ratings_i+averageratingscore_rf+schoolid_s`;
-
-// Then call this with the pk_id to get the ratings
-// const reqUrl = `https://www.ratemyprofessors.com/paginate/professors/ratings?tid=${teacherId}max=${maxCount}&cache=true`;
-
-// NOTE: If 'Staff', don't search for ratings.
 
 interface profRating {
     rating: string;
