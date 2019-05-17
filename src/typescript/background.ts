@@ -1,5 +1,4 @@
-
-interface response {
+type response = {
   response: {
     numFound: number;
     start: number
@@ -14,75 +13,94 @@ interface response {
   }
 }
 
-// IDEA: Potentially expand this later to include short blurbs like the first review, etc.
-
-interface givenCache {
-  profRatings: profRatingsCache;
-}
-interface profRatingsCache {
+type profRatingsCache = {
   profFullname: {
+    profId: string;
     rating: string;
     rmpLink: string;
     creationTime: number;
   }
 }
 
-interface profRating {
+type profRating = {
+  profId: string;
   rating: string;
   rmpLink: string;
 };
 
-async function fetchAndSendData(requestsList: [string, string][], tabId: number) {
-  // Get the cached prof names and fill in the cache where needed
-  chrome.storage.local.get(['profRatings'], (async ({profRatings}: givenCache) => {
+const fetchRMPData = async(fullName, schoolId): Promise<any> => {
+  try {
+    console.log(`Getting ${fullName} from RMP...`);
+    const url = `https://solr-aws-elb-production.ratemyprofessors.com//solr/rmp/select/?solrformat=true&rows=20&wt=json&q=${fullName}+AND+schoolid_s%3A${schoolId}&defType=edismax&qf=teacherfirstname_t\%5E2000+teacherlastname_t%5E2000+teacherfullname_t%5E2000+autosuggest&bf=pow(total_number_of_ratings_i%2C2.1)&sort=total_number_of_ratings_i+desc&siteName=rmp&rows=20&start=0&fl=pk_id+teacherfirstname_t+teacherlastname_t+total_number_of_ratings_i+averageratingscore_rf+schoolid_s`
+    const resp: any = await fetch(url);
+    const data: response = await resp.json();
+
+    if (!data.response.docs.length) throw new Error(`No professors found for the name ${fullName}, setting as unknown.`);
+    const currRating: profRating = {
+      profId: data.response.docs[0].pk_id.toString(),
+      rating: data.response.docs[0].averageratingscore_rf.toString(),
+      rmpLink: `https://www.ratemyprofessors.com/ShowRatings.jsp?tid=${data.response.docs[0].pk_id}`
+    };
+
+    console.log('Success');
+    return currRating;
+  } catch(err) {
+    console.log(err);
+    return {
+      profId: '',
+      rating: 'Unknown',
+      rmpLink: ''
+    };
+  }
+};
+
+async function fetchAndSendProfList(requestsList: [string, string][], tabId: number) {
+  // Get the cached prof names and fill in the cache where needed.
+  chrome.storage.local.get(['cachedProfRatings'], (async ({cachedProfRatings}: { cachedProfRatings: profRatingsCache }) => {
     // Get ratings for each request, either from the cache or a new request.
-    const cachedProfRatings: profRatingsCache | {} = profRatings || {};
-    const profRatingsList: profRating[] = [];
+    const newCachedProfRatings: profRatingsCache | {} = cachedProfRatings || {};
+
+    // Build a new one-to-one list of ratings based on the requestsList and cachedProfRatings.
+    const newRatingsList: profRating[] = [];
 
     for (const request of requestsList) {
-      const [fullName, rmpLink] = request;
+      const [fullName, schoolId] = request;
+
       if (fullName === 'Staff') {
         // Skip 'Staff', as that's just the placeholder name.
-        profRatingsList.push({
-          rating: "?",
+        newRatingsList.push({
+          profId: '',
+          rating: "Unknown",
           rmpLink: ''
         });
-      } else if (cachedProfRatings[fullName]) {
-        // TODO: Implement cache expiration
-        
+      } else if (newCachedProfRatings[fullName]) {
         console.log(`Getting ${fullName} from cache`);
-        profRatingsList.push(cachedProfRatings[fullName]);
-      } else {
-        try {
-          console.log(`Getting ${fullName} from RMP...`);
-          const resp: any = await fetch(rmpLink);
-          const data: response = await resp.json();
-          const currRating: profRating = {
-            rating: data.response.docs[0].averageratingscore_rf.toString(),
-            rmpLink: `https://www.ratemyprofessors.com/ShowRatings.jsp?tid=${data.response.docs[0].pk_id}`
-          };
+        
+        // If the cache is older than 2 months, refresh it.
+        if (Date.now() - newCachedProfRatings[fullName].creationTime > 5184000) {
+          console.log('Cache needs refreshing');
 
-          console.log('Success');
-          cachedProfRatings[fullName] = currRating;
-          profRatingsList.push(currRating);
-        } catch(err) {
-          console.log(`Failed to get ${fullName} from RMP`);
-          console.error(err);
-          profRatingsList.push({
-            rating: "Unknown",
-            rmpLink: ''
-          });
-        }
+          const currRating = await fetchRMPData(fullName, schoolId);
+          if (!currRating) throw new Error("Invalid return but didn't err?");
+          newCachedProfRatings[fullName] = {...currRating, creationTime: Date.now()};
+          newRatingsList.push(currRating);
+        } else newRatingsList.push(newCachedProfRatings[fullName]);
+      } else {
+        // Get new data from RMP.
+        const currRating = await fetchRMPData(fullName, schoolId);
+        if (!currRating) throw new Error("Invalid return but didn't err?");
+        newCachedProfRatings[fullName] = {...currRating, creationTime: Date.now()};
+        newRatingsList.push(currRating);
       }
     }
 
-    chrome.storage.local.set({profRatings: cachedProfRatings});
-    chrome.tabs.sendMessage(tabId, profRatingsList);
+    chrome.storage.local.set({cachedProfRatings: newCachedProfRatings});
+    chrome.tabs.sendMessage(tabId, newRatingsList);
   }));
 }
 
 const onMessage = ({requestsList}, sender): void => {
-  fetchAndSendData(requestsList, sender.tab.id);
+  fetchAndSendProfList(requestsList, sender.tab.id);
 };
 
 chrome.runtime.onMessage.addListener(onMessage);

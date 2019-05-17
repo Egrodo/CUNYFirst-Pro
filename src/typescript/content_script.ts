@@ -1,6 +1,7 @@
 import { debounce, nodeSearchHelper } from './helpers';
 
 interface profRating {
+    profId: string;
     rating: string;
     rmpLink: string;
 };
@@ -28,11 +29,9 @@ window.addEventListener('load', (): void => {
 
     // Finds and returns a list of the professor nodes
     const findProfNodes = (): NodeList => {
-        let currentProf: HTMLSpanElement = iframe.contentDocument.getElementById('MTG_INSTR$0');
-        
-        if (currentProf) {
-            // Use the attribute selector to get a NodeList of all professor name nodes.
-            const profNodeList: NodeList = iframe.contentDocument.querySelectorAll("[id^=MTG_INSTR]");
+        // Use the attribute selector to get a NodeList of all professor name nodes.
+        const profNodeList: NodeList = iframe.contentDocument.querySelectorAll("[id^=MTG_INSTR]");
+        if (profNodeList.length) {
             return profNodeList;
         } else {
             console.error('No professor nodes found, but supposedly on the right page?');
@@ -42,13 +41,8 @@ window.addEventListener('load', (): void => {
     // Take a list of profs and get the ratings for each from RMP. 
     function getThenDisplayRatings(profNodeList: NodeList): void {
         const requestsList: [string, string][] = Array.prototype.map.call(profNodeList, prof => {
-            // Each request is a tuple that keeps track of the name for caching purposes.
-
             const fullName = prof.innerText.split(' ').join('+');
-            return [
-                fullName,
-                `https://solr-aws-elb-production.ratemyprofessors.com//solr/rmp/select/?solrformat=true&rows=20&wt=json&q=${fullName}+AND+schoolid_s%3A${schoolId}&defType=edismax&qf=teacherfirstname_t\%5E2000+teacherlastname_t%5E2000+teacherfullname_t%5E2000+autosuggest&bf=pow(total_number_of_ratings_i%2C2.1)&sort=total_number_of_ratings_i+desc&siteName=rmp&rows=20&start=0&fl=pk_id+teacherfirstname_t+teacherlastname_t+total_number_of_ratings_i+averageratingscore_rf+schoolid_s`
-            ];
+            return [fullName, schoolId];
         });
         
         // Send a message to the background script telling it to perform the lookups.
@@ -62,6 +56,8 @@ window.addEventListener('load', (): void => {
     function displayRatings(ratingsList: profRating[], profNodes: NodeList): void {
         // Disconnect the observer before doing any DOM manip. It'll reconnect on next load.
         observer.disconnect();
+
+        console.log(ratingsList);
 
         // Rating at ratingsList[i] is for professor at profNodes[i]
         profNodes.forEach((node, i) => {
@@ -77,7 +73,8 @@ window.addEventListener('load', (): void => {
             td.appendChild(document.createElement('div'));
             td.children[0].appendChild(document.createElement('span'));
             td.children[0].children[0].className = 'PSLONGEDITBOX CUNYFIRSTPRO_ADDON';
-            // TODO: Make this colourful and shit
+
+            // Create the ratings span
             if (ratingsList[i].rmpLink) {
                 td.children[0].children[0].innerHTML = `${ratingsList[i].rating} | <a rel="noreferral noopener" target="_blank" href="${ratingsList[i].rmpLink}">Link</a>`;
             } else {
