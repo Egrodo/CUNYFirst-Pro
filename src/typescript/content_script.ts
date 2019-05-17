@@ -72,7 +72,12 @@ window.addEventListener('load', (): void => {
             td.appendChild(document.createElement('div'));
             td.children[0].appendChild(document.createElement('span'));
             td.children[0].children[0].className = 'PSLONGEDITBOX';
-            td.children[0].children[0].textContent = ratingsList[i].rating;
+            // TODO: Make this colourful and shit
+            if (ratingsList[i].rmpLink) {
+                td.children[0].children[0].innerHTML = `${ratingsList[i].rating} | <a rel="noreferral noopener" target="_blank" href="${ratingsList[i].rmpLink}">Link</a>`;
+            } else {
+                td.children[0].children[0].innerHTML = `Unknown | <a rel="noreferral noopener" target="_blank" href="https://www.ratemyprofessors.com/teacher/create">Add a review?</a>`;
+            }
 
             let parent = node.parentNode.parentNode
             parent.parentNode.insertBefore(td, parent.nextSibling);
@@ -80,10 +85,9 @@ window.addEventListener('load', (): void => {
             // Then go up up one more from there, down one child, add a new th after the 5th child.
             const th = document.createElement('th') as HTMLTableHeaderCellElement;
             th.className = 'PSLEVEL1GRIDCOLUMNHDR';
-            th.setAttribute('scope', 'col'); th.setAttribute('width', '98'); th.setAttribute('align', 'left'); th.setAttribute('abbr', 'Rating');
+            th.setAttribute('scope', 'col'); th.setAttribute('width', '120'); th.setAttribute('align', 'left'); th.setAttribute('abbr', 'Rating');
             th.appendChild(document.createElement('span'));
             th.children[0].setAttribute('title', "RateMyProfessor rating");
-            // TODO: Add link next to this
             th.children[0].textContent = 'Rating';
             
             parent = parent.parentNode.parentNode.children[0];

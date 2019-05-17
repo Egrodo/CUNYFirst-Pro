@@ -31,7 +31,7 @@ interface profRating {
   rmpLink: string;
 };
 
-// BUG: When you get a duplicate professor it doesn't push anything to the list?
+// TODO: Don't send back the API link, send back the properly formatted link
 async function fetchAndSendData(requestsList: [string, string][], tabId: number) {
   // Get the cached prof names and fill in the cache where needed
   chrome.storage.local.get(['profRatings'], (async ({profRatings}: givenCache) => {
@@ -46,7 +46,7 @@ async function fetchAndSendData(requestsList: [string, string][], tabId: number)
         // Skip 'Staff', as that's just the placeholder name.
         profRatingsList.push({
           rating: "?",
-          rmpLink
+          rmpLink: ''
         });
       } else if (cachedProfRatings[fullName]) {
         console.log(`Getting ${fullName} from cache`);
@@ -58,7 +58,7 @@ async function fetchAndSendData(requestsList: [string, string][], tabId: number)
           const data: response = await resp.json();
           const currRating: profRating = {
             rating: data.response.docs[0].averageratingscore_rf.toString(),
-            rmpLink
+            rmpLink: `https://www.ratemyprofessors.com/ShowRatings.jsp?tid=${data.response.docs[0].pk_id}`
           };
 
           console.log('Success');
@@ -68,7 +68,7 @@ async function fetchAndSendData(requestsList: [string, string][], tabId: number)
           console.error(err);
           profRatingsList.push({
             rating: "Unknown",
-            rmpLink
+            rmpLink: ''
           });
         }
       }
