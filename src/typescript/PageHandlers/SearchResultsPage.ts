@@ -1,5 +1,11 @@
 import { nodeSearchHelper } from '../helpers';
 
+type profRating = {
+    profId: string;
+    rating: string;
+    rmpLink: string;
+};
+
 // On this page, add ratings and links
 class SearchResultsPage {
   iframe: HTMLIFrameElement;

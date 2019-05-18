@@ -2,13 +2,7 @@ import { debounce } from './helpers';
 import { SearchResultsPage } from './PageHandlers/SearchResultsPage';
 import { SearchCriteriaPage } from './PageHandlers/SearchCriteriaPage';
 
-type profRating = {
-    profId: string;
-    rating: string;
-    rmpLink: string;
-};
-
-type pagesType = SearchResultsPage | SearchCriteriaPage | null
+type pagesType = SearchResultsPage | SearchCriteriaPage | null;
 
 // When the window loads, wait for the iframe to load then add a MutationObserver to watch for changes.
 window.addEventListener('load', (): void => {

@@ -3,7 +3,9 @@ class SearchCriteriaPage {
   observer: MutationObserver;
   schoolId: string;
   constructor(iframe, observer, schoolId) {
-    // console.log('Search Criteria Page!');
+    this.iframe = iframe;
+    this.observer = observer;
+    this.schoolId = schoolId;
   }
 
   start() {
