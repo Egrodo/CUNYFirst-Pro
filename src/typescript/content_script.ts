@@ -9,7 +9,7 @@ window.addEventListener('load', (): void => {
     const iframe = document.getElementById('ptifrmtgtframe') as HTMLIFrameElement;
     let observer: MutationObserver; // Putting this here so I can disconnect it before I do DOM manipulation.
     let schoolId: string = '222';
-    chrome.storage.sync.get(['schoolId'], (({schoolId: cachedId}: {schoolId: string}) => schoolId = cachedId ? cachedId : '222')); // Get the ID from the cache. Default to Baruch.
+    chrome.storage.local.get(['schoolId'], (({schoolId: cachedId}: {schoolId: string}) => schoolId = cachedId ? cachedId : '222')); // Get the ID from the cache. Default to Baruch.
 
     let currActivity: pagesType = null;
     let currPage: string = '';
