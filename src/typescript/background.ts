@@ -28,6 +28,7 @@ type profRating = {
   rmpLink: string;
 };
 
+// TODO: Genericize this page for use with other page engines.
 const fetchRMPData = async(fullName: string, schoolId: string): Promise<profRating> => {
   try {
     console.log(`Getting ${fullName} from RMP...`);

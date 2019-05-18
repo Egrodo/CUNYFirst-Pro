@@ -8,7 +8,7 @@ class SearchResultsPage {
   profNodeList: NodeList;
   listenerRef: Function;
 
-  constructor(iframe: HTMLIFrameElement, observer: MutationObserver, schoolId: string) {
+  constructor(iframe, observer, schoolId) {
       this.iframe = iframe;
       this.observer = observer;
       this.schoolId = schoolId;
@@ -84,7 +84,7 @@ class SearchResultsPage {
   }
 
   start = async (): Promise<void> => {
-      console.log('starting');
+      console.log('Starting SearchResultsPage engine');
       this.profNodeList = this.findProfNodes();
       await this.sendRatingsRequest(this.profNodeList);
 
@@ -97,7 +97,7 @@ class SearchResultsPage {
   }
 
   stop = (): void => {
-      console.log('stopping');
+      console.log('Stopping SearchResultsPage engine');
       this.observer = null;
       this.schoolId = null;
       this.iframe = null;
