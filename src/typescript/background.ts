@@ -28,7 +28,7 @@ type profRating = {
   rmpLink: string;
 };
 
-const fetchRMPData = async(fullName, schoolId): Promise<any> => {
+const fetchRMPData = async(fullName: string, schoolId: string): Promise<profRating> => {
   try {
     console.log(`Getting ${fullName} from RMP...`);
     const url = `https://solr-aws-elb-production.ratemyprofessors.com//solr/rmp/select/?solrformat=true&rows=20&wt=json&q=${fullName}+AND+schoolid_s%3A${schoolId}&defType=edismax&qf=teacherfirstname_t\%5E2000+teacherlastname_t%5E2000+teacherfullname_t%5E2000+autosuggest&bf=pow(total_number_of_ratings_i%2C2.1)&sort=total_number_of_ratings_i+desc&siteName=rmp&rows=20&start=0&fl=pk_id+teacherfirstname_t+teacherlastname_t+total_number_of_ratings_i+averageratingscore_rf+schoolid_s`
@@ -36,10 +36,16 @@ const fetchRMPData = async(fullName, schoolId): Promise<any> => {
     const data: response = await resp.json();
 
     if (!data.response.docs.length) throw new Error(`No professors found for the name ${fullName}, setting as unknown.`);
+    
+    const profId: string = data.response.docs[0].pk_id.toString();
+    // If the rating comes back as zero, that just means that the prof exists but has no reviews.
+    const rating: string = data.response.docs[0].averageratingscore_rf !== 0 ? data.response.docs[0].averageratingscore_rf.toString() : 'No data';
+    const rmpLink: string = `https://www.ratemyprofessors.com/ShowRatings.jsp?tid=${data.response.docs[0].pk_id}`;
+
     const currRating: profRating = {
-      profId: data.response.docs[0].pk_id.toString(),
-      rating: data.response.docs[0].averageratingscore_rf.toString(),
-      rmpLink: `https://www.ratemyprofessors.com/ShowRatings.jsp?tid=${data.response.docs[0].pk_id}`
+      profId,
+      rating,
+      rmpLink
     };
 
     console.log('Success');
@@ -49,7 +55,7 @@ const fetchRMPData = async(fullName, schoolId): Promise<any> => {
     return {
       profId: '',
       rating: 'Unknown',
-      rmpLink: ''
+      rmpLink: '',
     };
   }
 };
@@ -73,7 +79,7 @@ async function fetchAndSendProfList(requestsList: [string, string][], tabId: num
           rating: "Unknown",
           rmpLink: ''
         });
-      } else if (newCachedProfRatings[fullName]) {
+      } else if (newCachedProfRatings[fullName] && newCachedProfRatings[fullName].profId) { // Check if cached and if the cached version has data
         console.log(`Getting ${fullName} from cache`);
         
         // If the cache is older than 2 months, refresh it.
