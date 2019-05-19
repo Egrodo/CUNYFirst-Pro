@@ -1,3 +1,5 @@
+import {schoolIdToSelectValue, selectValueToSchoolId } from '../helpers';
+
 /*
   values of iframe at id CLASS_SRCH_WRK2_INSTITUTION
   BAR01 - 222
@@ -39,34 +41,40 @@ class SearchCriteriaPage {
     this.schoolId = schoolId;
   }
 
-  mapSchoolIdToSelectValue(schoolId: string): string {
-    switch(schoolId) {
-      case '222':
-        return 'BAR01';
-      default:
-        return 'BAR01';
-    }
-  }
-
   setSchoolSelect(schoolId: string) {
     const selectBox = this.iframe.contentDocument.getElementById('CLASS_SRCH_WRK2_INSTITUTION$31$') as HTMLSelectElement;
-    selectBox.value = this.mapSchoolIdToSelectValue(schoolId);
+    selectBox.value = schoolIdToSelectValue(schoolId);
 
     // Also fire the 'onchange' event manually to trigger semester lookup
     const event = new Event('change');
     selectBox.dispatchEvent(event);
   }
 
+  onSubmitBtnClick(): void {
+    // If search submit button clicked with a different school selected, save that one instead.
+    const selectBox = this.iframe.contentDocument.getElementById('CLASS_SRCH_WRK2_INSTITUTION$31$') as HTMLSelectElement;
+    if (selectBox.value !== schoolIdToSelectValue(this.schoolId)) {
+      chrome.storage.local.set({schoolId: selectValueToSchoolId(selectBox.value)});
+    }
+  }
 
   start() {
     console.log('Starting SearchCriteriaPage engine');
-    // On start, automatically select the school that you go to and watch for changes to it to update the storage'd copy.
-    console.log(typeof this.schoolId);
+    // On start, automatically select the school that you go to.
     this.setSchoolSelect(this.schoolId);
+    
+    const submitBtn = this.iframe.contentDocument.getElementById('CLASS_SRCH_WRK2_SSR_PB_CLASS_SRCH') as HTMLAnchorElement;
+    submitBtn.addEventListener('click', this.onSubmitBtnClick);
   }
 
   stop() {
     console.log('Stopping SearchCriteriaPage engine');
+
+    // The input box listener is already gone at this point.
+    // TODO: Is there any point in doing this?
+    this.observer = null;
+    this.schoolId = null;
+    this.iframe = null;
   }
 }
 

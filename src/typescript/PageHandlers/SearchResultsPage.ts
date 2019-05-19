@@ -95,15 +95,14 @@ class SearchResultsPage {
       await this.sendRatingsRequest(this.profNodeList);
 
       // Receive the lookups and display them.
-      this.listenerRef = (ratingsList: profRating[]): void => {
-          this.displayRatings(ratingsList, this.profNodeList);
-      };
-
+      this.listenerRef = ((ratingsList: profRating[]): void => this.displayRatings(ratingsList, this.profNodeList));
       chrome.runtime.onMessage.addListener(this.listenerRef as EventListener);
   }
 
   stop = (): void => {
       console.log('Stopping SearchResultsPage engine');
+
+      // TODO: Is there any point in doing this?
       this.observer = null;
       this.schoolId = null;
       this.iframe = null;
