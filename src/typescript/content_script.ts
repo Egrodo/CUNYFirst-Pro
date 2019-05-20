@@ -4,46 +4,67 @@ import { SearchCriteriaPage } from './PageHandlers/SearchCriteriaPage';
 
 type pagesType = SearchResultsPage | SearchCriteriaPage | null;
 
-// When the window loads, wait for the iframe to load then add a MutationObserver to watch for changes.
+// When the window loads, wait for the iframe to load then add an interval checking for page changes.
 window.addEventListener('load', (): void => {
     const iframe = document.getElementById('ptifrmtgtframe') as HTMLIFrameElement;
-    console.log(iframe);
-    let observer: MutationObserver; // Putting this here so I can disconnect it before I do DOM manipulation.
     let schoolId: string = '222';
     chrome.storage.local.get(['schoolId'], (({schoolId: cachedId}: {schoolId: string}) => schoolId = cachedId ? cachedId : '222')); // Get the ID from the cache. Default to Baruch.
 
     let currActivity: pagesType = null;
     let currPage: string = '';
     
-    // On mutate, figure out which page we're on and perform improvements depending.
-    // BUG: The mutation observer doesn't always work because it resets the body. Argh
-    // TODO: The only way I can think of improving it is to maintain an interval checking for headers. Migrate over to that.
-    function onMutate(): void {
-        // Unfortunately I've had difficulty adding other page engines because it's extremely difficult to detect section changes.
-        switch(getPage(iframe)) {
-            case 'Search Results':
-                if (currPage === 'searchResultsPage') break; // Don't start page engines more than once
-                currPage = 'searchResultsPage';
-                // If we've changed pages, stop the current engine before starting the new one.
-                if (currActivity) currActivity.stop();
-                currActivity = new SearchResultsPage(iframe, observer, schoolId);
-                currActivity.start();
-                break;
-            case 'Enter Search Criteria':
-                if (currPage === 'searchCriteriaPage') break;
-                currPage = 'searchCriteriaPage';
-                
-                if (currActivity) currActivity.stop();
-                currActivity = new SearchCriteriaPage(iframe, observer, schoolId);
-                currActivity.start();
-                break;
-            default:
-                console.log("We're not on a recognized page");
-                if (currActivity) {
-                    // Dereference whichever activity we were doing so it can be garbage collected.
-                    currActivity.stop();
-                    currActivity = null;
-                }
+    // It's a hack I know, but I tried everything. There is no reliable way to react to page changes.
+    function onInterval(): void {
+        // Each time the interval fires, check if if we're on the same page. If not, update the new page.
+        if (iframe.contentDocument && currPage !== getPage(iframe)) {
+            // If we're not on the same page as last time,
+            switch(getPage(iframe)) {
+                case 'Search Results':
+                    // Stop the last page engine, if there is one.
+                    if (currActivity) currActivity.stop();
+                    currActivity = new SearchResultsPage(iframe, schoolId);
+                    currActivity.start();
+                    currPage = 'Search Results';
+                    break;
+                case 'Enter Search Criteria':
+                    if (currActivity) currActivity.stop();
+                    currActivity = new SearchCriteriaPage(iframe, schoolId);
+                    currActivity.start();
+                    currPage = 'Enter Search Criteria';
+                    break;
+                case 'My Planner':
+                    console.log('Planner page; no improvements yet.');
+                    if (currActivity) currActivity.stop();
+                    currPage = 'My Planner';
+                    break;
+                case 'Select Term':
+                    console.log('Enroll page; no improvements yet.');
+                    if (currActivity) currActivity.stop();
+                    currPage = 'Select Term';
+                    break;
+                case 'My Academics':
+                    console.log('Academics page; no improvements yet.');
+                    if (currActivity) currActivity.stop();
+                    currPage = 'My Academics';
+                    break;
+                case 'Course List':
+                    console.log('Course List page; no improvements yet.');
+                    if (currActivity) currActivity.stop();
+                    currPage = 'Course List';
+                    break;
+                case 'My Course History':
+                    console.log('Course History page; no improvements yet.');
+                    if (currActivity) currActivity.stop();
+                    currPage = 'My Course History';
+                    break;
+                default:
+                    console.log('Unrecognized page, no improvements for this page.');
+                    if (currActivity) {
+                        currActivity.stop();
+                        currActivity = null;
+                    }
+                    currPage = '';
+            }
         }
     }
 
@@ -54,14 +75,14 @@ window.addEventListener('load', (): void => {
     };
 
     if (!iframe) return;
-    // Add the mutation observer to watch for page changes inside the iframe.
     iframe.addEventListener('load', function(): void {
         if (!iframe.contentDocument) return;
-        const body = iframe.contentDocument.body;
-        observer = new MutationObserver(debounce(200, onMutate));
-        const config: MutationObserverInit = { childList: true, subtree: true };
-        observer.observe(body, config);
-
-        iframe.addEventListener('unload', observer.disconnect);
+        // Unfortunately CUNYFirst makes it extremely difficult to detect page changes, so we're going to just have an interval that checks for headers every 600ms.
+        const intervalId = window.setInterval(onInterval, 600);
+        iframe.addEventListener('unload', (() => {
+            window.clearInterval(intervalId);
+            currActivity.stop();
+            currActivity = null;
+        }));
     });
 });

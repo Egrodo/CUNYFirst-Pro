@@ -2,11 +2,9 @@ import { debounce, schoolIdToSelectValue, selectValueToSchoolId } from '../helpe
 
 class SearchCriteriaPage {
   iframe: HTMLIFrameElement;
-  observer: MutationObserver;
   schoolId: string;
-  constructor(iframe, observer, schoolId) {
+  constructor(iframe, schoolId) {
     this.iframe = iframe;
-    this.observer = observer;
     this.schoolId = schoolId;
   }
 
@@ -33,9 +31,7 @@ class SearchCriteriaPage {
     setTimeout(() => {
       const submitBtn = this.iframe.contentDocument.getElementById('CLASS_SRCH_WRK2_SSR_PB_CLASS_SRCH') as HTMLAnchorElement;
       // No need to use a ref for the listener bc I'm not removing it at any time.
-      console.log('adding');
       submitBtn.addEventListener('click', ((event) => {
-        console.log('submitting');
         // If search submit button clicked with a different school selected, save that one instead.
         const selectBox = this.iframe.contentDocument.getElementById('CLASS_SRCH_WRK2_INSTITUTION$31$') as HTMLSelectElement;
         if (selectBox.value !== schoolIdToSelectValue(this.schoolId)) {
