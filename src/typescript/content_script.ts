@@ -1,4 +1,3 @@
-import { debounce } from './helpers';
 import { SearchResultsPage } from './PageHandlers/SearchResultsPage';
 import { SearchCriteriaPage } from './PageHandlers/SearchCriteriaPage';
 
@@ -9,7 +8,7 @@ window.addEventListener('load', (): void => {
     const iframe = document.getElementById('ptifrmtgtframe') as HTMLIFrameElement;
     let schoolId: string = '222';
     chrome.storage.local.get(['schoolId'], (({schoolId: cachedId}: {schoolId: string}) => schoolId = cachedId ? cachedId : '222')); // Get the ID from the cache. Default to Baruch.
-
+    chrome.storage.onChanged.addListener((changes) => schoolId = changes.schoolId ? changes.schoolId.newValue : schoolId); // Ensure the schoolId is kept up to date.
     let currActivity: pagesType = null;
     let currPage: string = '';
     
@@ -17,7 +16,7 @@ window.addEventListener('load', (): void => {
     function onInterval(): void {
         // Each time the interval fires, check if if we're on the same page. If not, update the new page.
         if (iframe.contentDocument && currPage !== getPage(iframe)) {
-            // If we're not on the same page as last time,
+            // If we're not on the same page as last time, nav to new page.
             switch(getPage(iframe)) {
                 case 'Search Results':
                     // Stop the last page engine, if there is one.

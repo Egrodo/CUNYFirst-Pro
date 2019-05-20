@@ -17,8 +17,6 @@ class SearchResultsPage {
     constructor(iframe, schoolId) {
         this.iframe = iframe;
         this.schoolId = schoolId;
-
-        this.renderRatings = this.renderRatings.bind(this);
     }
 
     // Finds and returns a list of the professor name nodes
@@ -92,7 +90,7 @@ class SearchResultsPage {
         this.renderRatings();
 
         // Use a MutationObserver to check if the user has caused the page to rewrite the content, and write it again.
-        this.observer = new MutationObserver(debounce(200, this.renderRatings));
+        this.observer = new MutationObserver(debounce(200, this.renderRatings.bind(this)));
         const config: MutationObserverInit = { childList: true, subtree: true };
         this.observer.observe(this.iframe.contentDocument.body, config);
 

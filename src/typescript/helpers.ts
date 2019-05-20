@@ -18,25 +18,26 @@ const nodeSearchHelper = (parent: Element, textToFind: string): boolean => {
 };
 
 /*
+  TODO: 
   values of iframe at id CLASS_SRCH_WRK2_INSTITUTION
   BAR01 - 222
-  BMC01 - Borough of Manhattan CC
+  BMC01 - 3956
   BCC01 - Bronx CC
-  BKL01 - Brooklyn College
-  CTY01 - City College
+  BKL01 - 223
+  CTY01 - 224
   CSI01 - College of Staten Island
   GRD01 - Graduate Center
   NCC01 - Guttman CC
   HOS01 - Hostoc CC
-  HRT01 - Hunter College
+  HRT01 - 226
   JJC01 - John Jay College
   KCC01 - Kingsborough CC
   LAG01 - LaGuardia CC
-  LEH01 - Lehman College
+  LEH01 - 228
   MHC01 - Macaulay Honors College
   MEC01 - Medgar Evers College
   NYT01 - NYC College of Technology
-  QNS01 - Queens College
+  QNS01 - 331
   QCC01 - QueensBorough CC
   SOJ01 - School of Journalism
   SLU01 - School of Labor&Urban Studies
@@ -52,6 +53,16 @@ const schoolIdToSelectValue = (schoolId: string): string => {
   switch(schoolId) {
     case '222':
       return 'BAR01';
+    case '223':
+      return 'BKL01';
+    case '224':
+      return 'CTY01';
+    case '226':
+      return 'HRT01';
+    case '228':
+      return 'LEH01';
+    case '331':
+      return 'QNS01';
     default:
       return 'BAR01';
   }
@@ -61,6 +72,16 @@ const selectValueToSchoolId = (selectValue: string): string => {
   switch(selectValue) {
     case 'BAR01':
       return '222';
+    case 'BKL01':
+      return '223';
+    case 'CTY01':
+      return '224';
+    case 'HRT01':
+      return '226';
+    case 'LEH01':
+      return '228';
+    case 'QNS01':
+      return '331';
     default:
       return '222';
   }
