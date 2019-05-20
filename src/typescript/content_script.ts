@@ -7,6 +7,7 @@ type pagesType = SearchResultsPage | SearchCriteriaPage | null;
 // When the window loads, wait for the iframe to load then add a MutationObserver to watch for changes.
 window.addEventListener('load', (): void => {
     const iframe = document.getElementById('ptifrmtgtframe') as HTMLIFrameElement;
+    console.log(iframe);
     let observer: MutationObserver; // Putting this here so I can disconnect it before I do DOM manipulation.
     let schoolId: string = '222';
     chrome.storage.local.get(['schoolId'], (({schoolId: cachedId}: {schoolId: string}) => schoolId = cachedId ? cachedId : '222')); // Get the ID from the cache. Default to Baruch.
@@ -15,7 +16,10 @@ window.addEventListener('load', (): void => {
     let currPage: string = '';
     
     // On mutate, figure out which page we're on and perform improvements depending.
+    // BUG: The mutation observer doesn't always work because it resets the body. Argh
+    // TODO: The only way I can think of improving it is to maintain an interval checking for headers. Migrate over to that.
     function onMutate(): void {
+        // Unfortunately I've had difficulty adding other page engines because it's extremely difficult to detect section changes.
         switch(getPage(iframe)) {
             case 'Search Results':
                 if (currPage === 'searchResultsPage') break; // Don't start page engines more than once
@@ -49,6 +53,7 @@ window.addEventListener('load', (): void => {
         return '';
     };
 
+    if (!iframe) return;
     // Add the mutation observer to watch for page changes inside the iframe.
     iframe.addEventListener('load', function(): void {
         if (!iframe.contentDocument) return;

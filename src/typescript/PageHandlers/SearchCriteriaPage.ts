@@ -1,35 +1,4 @@
-import {schoolIdToSelectValue, selectValueToSchoolId } from '../helpers';
-
-/*
-  values of iframe at id CLASS_SRCH_WRK2_INSTITUTION
-  BAR01 - 222
-  BMC01 - Borough of Manhattan CC
-  BCC01 - Bronx CC
-  BKL01 - Brooklyn College
-  CTY01 - City College
-  CSI01 - College of Staten Island
-  GRD01 - Graduate Center
-  NCC01 - Guttman CC
-  HOS01 - Hostoc CC
-  HRT01 - Hunter College
-  JJC01 - John Jay College
-  KCC01 - Kingsborough CC
-  LAG01 - LaGuardia CC
-  LEH01 - Lehman College
-  MHC01 - Macaulay Honors College
-  MEC01 - Medgar Evers College
-  NYT01 - NYC College of Technology
-  QNS01 - Queens College
-  QCC01 - QueensBorough CC
-  SOJ01 - School of Journalism
-  SLU01 - School of Labor&Urban Studies
-  LAW01 - School of Law
-  MED01 - School of Medicine
-  SPS01 - School of Professional Studies
-  SPH01 - School of Public Health
-  UAPC1 - University Processing Center
-  YRK01 - York College
-*/
+import { debounce, schoolIdToSelectValue, selectValueToSchoolId } from '../helpers';
 
 class SearchCriteriaPage {
   iframe: HTMLIFrameElement;
@@ -50,31 +19,36 @@ class SearchCriteriaPage {
     selectBox.dispatchEvent(event);
   }
 
-  onSubmitBtnClick(): void {
-    // If search submit button clicked with a different school selected, save that one instead.
-    const selectBox = this.iframe.contentDocument.getElementById('CLASS_SRCH_WRK2_INSTITUTION$31$') as HTMLSelectElement;
-    if (selectBox.value !== schoolIdToSelectValue(this.schoolId)) {
-      chrome.storage.local.set({schoolId: selectValueToSchoolId(selectBox.value)});
-    }
-  }
-
   start() {
+    // BUG: Navigating away and back without reloading the iframe doesn't setSchoolSelect
+    // This is because the mutation observer doesn't fire for certain section changes. wtf
+
     console.log('Starting SearchCriteriaPage engine');
-    // On start, automatically select the school that you go to.
+    // The problem with binding a click method onto the submit button is that the webpage
+    // re-creates the button a bunch post-loading, so it overwrites the listener.
+    // So on start, briefly take over the mutation observer to wait until it's done before adding listener,
     this.setSchoolSelect(this.schoolId);
-    
-    const submitBtn = this.iframe.contentDocument.getElementById('CLASS_SRCH_WRK2_SSR_PB_CLASS_SRCH') as HTMLAnchorElement;
-    submitBtn.addEventListener('click', this.onSubmitBtnClick);
+
+    // Find a better way to do this, only do this stuff after the page is done doing a fuck.
+    setTimeout(() => {
+      const submitBtn = this.iframe.contentDocument.getElementById('CLASS_SRCH_WRK2_SSR_PB_CLASS_SRCH') as HTMLAnchorElement;
+      // No need to use a ref for the listener bc I'm not removing it at any time.
+      console.log('adding');
+      submitBtn.addEventListener('click', ((event) => {
+        console.log('submitting');
+        // If search submit button clicked with a different school selected, save that one instead.
+        const selectBox = this.iframe.contentDocument.getElementById('CLASS_SRCH_WRK2_INSTITUTION$31$') as HTMLSelectElement;
+        if (selectBox.value !== schoolIdToSelectValue(this.schoolId)) {
+          chrome.storage.local.set({schoolId: selectValueToSchoolId(selectBox.value)});
+        }
+      }));
+    }, 500);
   }
 
   stop() {
     console.log('Stopping SearchCriteriaPage engine');
 
-    // The input box listener is already gone at this point.
-    // TODO: Is there any point in doing this?
-    this.observer = null;
-    this.schoolId = null;
-    this.iframe = null;
+    // The input box listener is already gone at this point, no need to remove.
   }
 }
 

@@ -101,12 +101,6 @@ class SearchResultsPage {
 
   stop = (): void => {
       console.log('Stopping SearchResultsPage engine');
-
-      // TODO: Is there any point in doing this?
-      this.observer = null;
-      this.schoolId = null;
-      this.iframe = null;
-      this.profNodeList = null;
       chrome.runtime.onMessage.removeListener(this.listenerRef as EventListener);
   }
 }
