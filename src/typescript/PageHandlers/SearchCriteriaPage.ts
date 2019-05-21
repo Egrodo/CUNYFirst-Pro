@@ -25,14 +25,13 @@ class SearchCriteriaPage {
       'CLASS_SRCH_WRK2_SSR_PB_CLASS_SRCH',
     ) as HTMLAnchorElement;
 
+    if (!submitBtn) return;
     submitBtn.addEventListener('click', () => {
       // If search submit button clicked with a different school selected, save that one instead.
       const selectBox = this.iframe.contentDocument.getElementById(
         'CLASS_SRCH_WRK2_INSTITUTION$31$',
       ) as HTMLSelectElement;
-      console.log(selectBox.value, schoolIdToSelectValue(this.schoolId));
       if (selectBox.value !== schoolIdToSelectValue(this.schoolId)) {
-        console.log(selectValueToSchoolId(selectBox.value));
         chrome.storage.local.set({ schoolId: selectValueToSchoolId(selectBox.value) });
       }
     });
