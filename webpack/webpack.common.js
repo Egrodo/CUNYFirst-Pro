@@ -1,43 +1,39 @@
 const webpack = require("webpack");
-const path = require('path');
-const CopyPlugin = require('copy-webpack-plugin');
-const srcTypescriptDir = '../src/typescript/';
+const path = require("path");
+const CopyPlugin = require("copy-webpack-plugin");
+const srcTypescriptDir = "../src/typescript/";
 
 module.exports = {
-    entry: {
-        background: path.join(__dirname, srcTypescriptDir + 'background.ts'),
-        content_script: path.join(__dirname, srcTypescriptDir + 'content_script.ts'),
-        options: path.join(__dirname, srcTypescriptDir + 'options.ts')
+  entry: {
+    background: path.join(__dirname, srcTypescriptDir + "background.ts"),
+    content_script: path.join(__dirname, srcTypescriptDir + "content_script.ts"),
+    options: path.join(__dirname, srcTypescriptDir + "options.ts"),
+  },
+  output: {
+    path: path.join(__dirname, "../dist/js"),
+    filename: "[name].js",
+  },
+  optimization: {
+    splitChunks: {
+      name: "vendor",
+      chunks: "initial",
     },
-    output: {
-        path: path.join(__dirname, '../dist/js'),
-        filename: '[name].js'
-    },
-    optimization: {
-        splitChunks: {
-            name: 'vendor',
-            chunks: "initial"
-        }
-    },
-    module: {
-        rules: [
-            {
-                test: /\.tsx?$/,
-                use: 'ts-loader',
-                exclude: /node_modules/
-            }
-        ]
-    },
-    resolve: {
-        extensions: ['.ts', '.tsx', '.js']
-    },
-    plugins: [
-        // exclude locale files in moment
-        new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
-        new CopyPlugin([
-            { from: '.', to: '../' }
-          ],
-          {context: 'src/assets' }
-        ),
-    ]
+  },
+  module: {
+    rules: [
+      {
+        test: /\.tsx?$/,
+        use: "ts-loader",
+        exclude: /node_modules/,
+      },
+    ],
+  },
+  resolve: {
+    extensions: [".ts", ".tsx", ".js"],
+  },
+  plugins: [
+    // exclude locale files in moment
+    new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
+    new CopyPlugin([{ from: ".", to: "../" }], { context: "src/assets" }),
+  ],
 };

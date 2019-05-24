@@ -1,18 +1,18 @@
 const debounce = (delay: number, fn: Function) => {
   let timerId;
-  return ((...args) => {
-      if (timerId) clearTimeout(timerId);
-      timerId = setTimeout(() => {
-          fn(...args);
-          timerId = null;
-      }, delay);
-  });
-}
+  return (...args) => {
+    if (timerId) clearTimeout(timerId);
+    timerId = setTimeout(() => {
+      fn(...args);
+      timerId = null;
+    }, delay);
+  };
+};
 
 const nodeSearchHelper = (parent: Element, textToFind: string): boolean => {
   const walker = document.createTreeWalker(parent, NodeFilter.SHOW_ELEMENT);
   while (walker.nextNode()) {
-      if (walker.currentNode.textContent === textToFind) return true;
+    if (walker.currentNode.textContent === textToFind) return true;
   }
   return false;
 };
@@ -50,46 +50,41 @@ const nodeSearchHelper = (parent: Element, textToFind: string): boolean => {
 */
 
 const schoolIdToSelectValue = (schoolId: string): string => {
-  switch(schoolId) {
-    case '222':
-      return 'BAR01';
-    case '223':
-      return 'BKL01';
-    case '224':
-      return 'CTY01';
-    case '226':
-      return 'HRT01';
-    case '228':
-      return 'LEH01';
-    case '331':
-      return 'QNS01';
+  switch (schoolId) {
+    case "222":
+      return "BAR01";
+    case "223":
+      return "BKL01";
+    case "224":
+      return "CTY01";
+    case "226":
+      return "HRT01";
+    case "228":
+      return "LEH01";
+    case "331":
+      return "QNS01";
     default:
-      return 'BAR01';
+      return "BAR01";
   }
 };
 
 const selectValueToSchoolId = (selectValue: string): string => {
-  switch(selectValue) {
-    case 'BAR01':
-      return '222';
-    case 'BKL01':
-      return '223';
-    case 'CTY01':
-      return '224';
-    case 'HRT01':
-      return '226';
-    case 'LEH01':
-      return '228';
-    case 'QNS01':
-      return '331';
+  switch (selectValue) {
+    case "BAR01":
+      return "222";
+    case "BKL01":
+      return "223";
+    case "CTY01":
+      return "224";
+    case "HRT01":
+      return "226";
+    case "LEH01":
+      return "228";
+    case "QNS01":
+      return "331";
     default:
-      return '222';
+      return "222";
   }
 };
 
-export {
-  debounce,
-  nodeSearchHelper,
-  schoolIdToSelectValue,
-  selectValueToSchoolId
-};
+export { debounce, nodeSearchHelper, schoolIdToSelectValue, selectValueToSchoolId };
