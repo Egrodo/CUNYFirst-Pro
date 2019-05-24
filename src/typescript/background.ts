@@ -22,14 +22,17 @@ type profRatingsCache = {
   }
 }
 
+type ratingsRequest = {
+  schoolId: string;
+  profNames: string[];
+}
+
 type profRating = {
   profId: string;
   rating: string;
-  rmpLink: string;
 };
 
-// TODO: Genericize this page for use with other page engines.
-const fetchRMPData = async(fullName: string, schoolId: string): Promise<profRating> => {
+const fetchProfRatings = async(fullName: string, schoolId: string): Promise<profRating> => {
   try {
     console.log(`Getting ${fullName} from RMP...`);
     const url = `https://solr-aws-elb-production.ratemyprofessors.com//solr/rmp/select/?solrformat=true&rows=20&wt=json&q=${fullName}+AND+schoolid_s%3A${schoolId}&defType=edismax&qf=teacherfirstname_t\%5E2000+teacherlastname_t%5E2000+teacherfullname_t%5E2000+autosuggest&bf=pow(total_number_of_ratings_i%2C2.1)&sort=total_number_of_ratings_i+desc&siteName=rmp&rows=20&start=0&fl=pk_id+teacherfirstname_t+teacherlastname_t+total_number_of_ratings_i+averageratingscore_rf+schoolid_s`
@@ -41,12 +44,10 @@ const fetchRMPData = async(fullName: string, schoolId: string): Promise<profRati
     const profId: string = data.response.docs[0].pk_id.toString();
     // If the rating comes back as zero, that just means that the prof exists but has no reviews.
     const rating: string = data.response.docs[0].averageratingscore_rf !== 0 ? data.response.docs[0].averageratingscore_rf.toString() : 'No data';
-    const rmpLink: string = `https://www.ratemyprofessors.com/ShowRatings.jsp?tid=${data.response.docs[0].pk_id}`;
 
     const currRating: profRating = {
       profId,
       rating,
-      rmpLink
     };
 
     console.log('Success');
@@ -56,12 +57,11 @@ const fetchRMPData = async(fullName: string, schoolId: string): Promise<profRati
     return {
       profId: '',
       rating: 'Unknown',
-      rmpLink: '',
     };
   }
 };
 
-async function fetchAndSendProfList(requestsList: [string, string][], tabId: number) {
+async function sendProfList(ratingsRequest: ratingsRequest, tabId: number) {
   // Get the cached prof names and fill in the cache where needed.
   chrome.storage.local.get(['cachedProfRatings'], (async ({cachedProfRatings}: { cachedProfRatings: profRatingsCache }) => {
     // Get ratings for each request, either from the cache or a new request.
@@ -70,15 +70,12 @@ async function fetchAndSendProfList(requestsList: [string, string][], tabId: num
     // Build a new one-to-one list of ratings based on the requestsList and cachedProfRatings.
     const newRatingsList: profRating[] = [];
 
-    for (const request of requestsList) {
-      const [fullName, schoolId] = request;
-
+    for (const fullName of ratingsRequest.profNames) {
       if (fullName === 'Staff') {
         // Skip 'Staff', as that's just the placeholder name.
         newRatingsList.push({
           profId: '',
           rating: "Unknown",
-          rmpLink: ''
         });
       } else if (newCachedProfRatings[fullName] && newCachedProfRatings[fullName].profId) { // Check if cached and if the cached version has data
         console.log(`Getting ${fullName} from cache`);
@@ -87,14 +84,14 @@ async function fetchAndSendProfList(requestsList: [string, string][], tabId: num
         if (Date.now() - newCachedProfRatings[fullName].creationTime > 5184000) {
           console.log('Cache needs refreshing');
 
-          const currRating = await fetchRMPData(fullName, schoolId);
+          const currRating = await fetchProfRatings(fullName, ratingsRequest.schoolId);
           if (!currRating) throw new Error("Invalid return but didn't err?");
           newCachedProfRatings[fullName] = {...currRating, creationTime: Date.now()};
           newRatingsList.push(currRating);
         } else newRatingsList.push(newCachedProfRatings[fullName]);
       } else {
         // Get new data from RMP.
-        const currRating = await fetchRMPData(fullName, schoolId);
+        const currRating = await fetchProfRatings(fullName, ratingsRequest.schoolId);
         if (!currRating) throw new Error("Invalid return but didn't err?");
         newCachedProfRatings[fullName] = {...currRating, creationTime: Date.now()};
         newRatingsList.push(currRating);
@@ -106,8 +103,8 @@ async function fetchAndSendProfList(requestsList: [string, string][], tabId: num
   }));
 }
 
-const onMessage = ({requestsList}, sender): void => {
-  fetchAndSendProfList(requestsList, sender.tab.id);
+const onMessage = ({ratingsRequest}, sender): void => {
+  sendProfList(ratingsRequest, sender.tab.id);
 };
 
 chrome.runtime.onMessage.addListener(onMessage);

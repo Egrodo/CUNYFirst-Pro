@@ -1,24 +1,16 @@
 // This component controls the popup box that shows the user professor reviews when they click on the preview button
 
-type review = {
-  rating: string;
-  review: string;
-};
-
 class ReviewsPopup {
-  profName: string;
-  reviewsList: review[];
-
-  start(profName: string, reviewsList: review[]) {
+  profId: string;
+  
+  constructor(profId: string) {
     console.log("Starting ReviewsPopup");
-    this.profName = profName;
-    this.reviewsList = reviewsList;
+    this.profId = profId;
   }
 
-  update(profName: string, reviewsList: review[]) {
+  update(profId: string) {
     console.log("Updating ReviewsPopup");
-    this.profName = profName;
-    this.reviewsList = reviewsList;
+    this.profId = profId;
   }
 
   stop() {
@@ -26,3 +18,5 @@ class ReviewsPopup {
     // Remove the DOM stuff.
   }
 }
+
+export { ReviewsPopup };
