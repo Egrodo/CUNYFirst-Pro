@@ -1,4 +1,4 @@
-import { debounce, nodeSearchHelper } from "../helpers";
+import { debounce, nodeSearchHelper } from '../helpers';
 import { ReviewsPopup } from '../Components/ReviewsPopup';
 
 type profRating = {
@@ -9,7 +9,7 @@ type profRating = {
 type ratingsRequest = {
   schoolId: string;
   profNames: string[];
-}
+};
 
 // On this page, add ratings and links
 class SearchResultsPage {
@@ -19,16 +19,18 @@ class SearchResultsPage {
   observer: MutationObserver;
   listenerRef: Function;
   popupRef: ReviewsPopup;
+  hasMutated: boolean;
 
   constructor(iframe, schoolId) {
     this.iframe = iframe;
     this.schoolId = schoolId;
+    this.hasMutated = false;
   }
 
   // Finds and returns a list of the professor name nodes
   findProfNodes(): NodeList {
     // Use the attribute selector to get a NodeList of all professor name nodes.
-    const profNodeList: NodeList = this.iframe.contentDocument.querySelectorAll("[id^=MTG_INSTR]");
+    const profNodeList: NodeList = this.iframe.contentDocument.querySelectorAll('[id^=MTG_INSTR]');
     return profNodeList;
   }
 
@@ -36,11 +38,11 @@ class SearchResultsPage {
   sendRatingsRequest(profNodeList: NodeList): void {
     const ratingsRequest: ratingsRequest = {
       schoolId: this.schoolId,
-      profNames: Array.prototype.map.call(profNodeList, (prof => prof.innerText.split(" ").join("+")))
-    }
+      profNames: Array.prototype.map.call(profNodeList, prof => prof.innerText.split(' ').join('+')),
+    };
 
     // Send a message to the background script telling it to perform the lookups.
-    chrome.runtime.sendMessage({ ratingsRequest });
+    chrome.runtime.sendMessage({ type: 'getRatingsList', data: { ratingsRequest } });
   }
 
   displayRatings(ratingsList: profRating[], profNodes: NodeList): void {
@@ -48,19 +50,19 @@ class SearchResultsPage {
       const cellParent: Node = node.parentNode.parentNode;
 
       // In cases where the content is mutated but the page isn't changed, check if we've already added the ratings before adding again.
-      if (nodeSearchHelper(cellParent.parentElement.parentElement, "Rating")) return;
+      if (nodeSearchHelper(cellParent.parentElement.parentElement, 'Rating')) return;
 
       // Use document fragment to reduce reflow.
       const fragment: DocumentFragment = document.createDocumentFragment();
 
       // First create the ratings table cell
-      const td = document.createElement("td") as HTMLTableDataCellElement;
-      td.className = "PSLEVEL3GRIDROW";
-      td.setAttribute("align", "left");
-      td.appendChild(document.createElement("div"));
-      td.children[0].appendChild(document.createElement("span"));
-      td.children[0].children[0].className = "PSLONGEDITBOX CUNYFIRSTPRO_ADDON";
-      
+      const td = document.createElement('td') as HTMLTableDataCellElement;
+      td.className = 'PSLEVEL3GRIDROW';
+      td.setAttribute('align', 'left');
+      td.appendChild(document.createElement('div'));
+      td.children[0].appendChild(document.createElement('span'));
+      td.children[0].children[0].className = 'PSLONGEDITBOX CUNYFIRSTPRO_ADDON';
+
       // If the rating for this prof is known, create the rating span.
       if (ratingsList[i].rating) {
         const ratingSpan: HTMLSpanElement = document.createElement('span');
@@ -72,15 +74,18 @@ class SearchResultsPage {
         ratingPreviewLink.href = 'javascript:;';
         ratingPreviewLink.innerText = 'See Reviews';
         ratingPreviewLink.dataset.profId = ratingsList[i].profId;
-        ratingPreviewLink.addEventListener('click', (({target}: {target: EventTarget}): void => {
-          if (!(target instanceof HTMLAnchorElement)) return;
+        ratingPreviewLink.addEventListener(
+          'click',
+          ({ target }: { target: EventTarget }): void => {
+            if (!(target instanceof HTMLAnchorElement)) return;
 
-          if (this.popupRef) {
-            this.popupRef.update(target.dataset.profId);
-          } else {
-            this.popupRef = new ReviewsPopup(target.dataset.profId);
-          }
-        }));
+            if (this.popupRef) {
+              this.popupRef.update(target.dataset.profId);
+            } else {
+              this.popupRef = new ReviewsPopup(target.dataset.profId);
+            }
+          },
+        );
 
         td.children[0].children[0].appendChild(ratingSpan);
         td.children[0].children[0].appendChild(middleBreak);
@@ -103,16 +108,16 @@ class SearchResultsPage {
 
       // Then create the ratings table header
       const headerParent: Element = cellParent.parentNode.parentNode.children[0];
-      const th = document.createElement("th") as HTMLTableHeaderCellElement;
-      th.className = "PSLEVEL1GRIDCOLUMNHDR";
-      th.setAttribute("scope", "col");
-      th.setAttribute("width", "120");
-      th.setAttribute("align", "left");
-      th.setAttribute("abbr", "Rating");
-      th.appendChild(document.createElement("span"));
-      th.children[0].setAttribute("title", "RateMyProfessor rating");
-      th.children[0].className = "CUNYFIRSTPRO_ADDON";
-      th.children[0].textContent = "Rating";
+      const th = document.createElement('th') as HTMLTableHeaderCellElement;
+      th.className = 'PSLEVEL1GRIDCOLUMNHDR';
+      th.setAttribute('scope', 'col');
+      th.setAttribute('width', '120');
+      th.setAttribute('align', 'left');
+      th.setAttribute('abbr', 'Rating');
+      th.appendChild(document.createElement('span'));
+      th.children[0].setAttribute('title', 'RateMyProfessor rating');
+      th.children[0].className = 'CUNYFIRSTPRO_ADDON';
+      th.children[0].textContent = 'Rating';
 
       headerParent.insertBefore(th, headerParent.children[5]);
     });
@@ -124,22 +129,27 @@ class SearchResultsPage {
   }
 
   start(): void {
-    console.log("Starting SearchResultsPage engine");
+    console.log('Starting SearchResultsPage engine');
     this.renderRatings();
 
     // Use a MutationObserver to check if the user has caused the page to rewrite the content, and write it again.
-    this.observer = new MutationObserver(debounce(200, this.renderRatings.bind(this)));
+    this.observer = new MutationObserver(() => {
+      // Ignore the first mutate, as it's caused by the page initial page start up a few lines up.
+      if (this.hasMutated) {
+        debounce(200, this.renderRatings.bind(this));
+      } else this.hasMutated = true;
+    });
+
     const config: MutationObserverInit = { childList: true, subtree: true };
     this.observer.observe(this.iframe.contentDocument.body, config);
 
     // Receive the lookups and display them.
-    this.listenerRef = (ratingsList: profRating[]): void =>
-      this.displayRatings(ratingsList, this.profNodeList);
+    this.listenerRef = (ratingsList: profRating[]): void => this.displayRatings(ratingsList, this.profNodeList);
     chrome.runtime.onMessage.addListener(this.listenerRef as EventListener);
   }
 
   stop(): void {
-    console.log("Stopping SearchResultsPage engine");
+    console.log('Stopping SearchResultsPage engine');
     chrome.runtime.onMessage.removeListener(this.listenerRef as EventListener);
     if (this.popupRef) this.popupRef.stop();
     this.observer.disconnect();
