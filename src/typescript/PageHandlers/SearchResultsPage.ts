@@ -11,6 +11,11 @@ type ratingsRequest = {
   profNames: string[];
 };
 
+type message = {
+  type: string;
+  data: {};
+};
+
 // On this page, add ratings and links
 class SearchResultsPage {
   iframe: HTMLIFrameElement;
@@ -25,6 +30,26 @@ class SearchResultsPage {
     this.iframe = iframe;
     this.schoolId = schoolId;
     this.hasMutated = false;
+
+    console.log('Starting SearchResultsPage engine');
+    this.renderRatings();
+
+    // Use a MutationObserver to check if the user has caused the page to rewrite the content, and write it again.
+    this.observer = new MutationObserver(() => {
+      // Ignore the first mutate, as it's caused by the page initial page start up a few lines up.
+      if (this.hasMutated) {
+        debounce(200, this.renderRatings.bind(this));
+      } else this.hasMutated = true;
+    });
+
+    const config: MutationObserverInit = { childList: true, subtree: true };
+    this.observer.observe(this.iframe.contentDocument.body, config);
+
+    // Receive the lookups and display them.
+    this.listenerRef = ({ type, data }): void => {
+      if (type === 'ratingsList') this.displayRatings(data.ratingsList, this.profNodeList);
+    };
+    chrome.runtime.onMessage.addListener(this.listenerRef as EventListener);
   }
 
   // Finds and returns a list of the professor name nodes
@@ -126,26 +151,6 @@ class SearchResultsPage {
   renderRatings(): void {
     this.profNodeList = this.findProfNodes();
     this.sendRatingsRequest(this.profNodeList);
-  }
-
-  start(): void {
-    console.log('Starting SearchResultsPage engine');
-    this.renderRatings();
-
-    // Use a MutationObserver to check if the user has caused the page to rewrite the content, and write it again.
-    this.observer = new MutationObserver(() => {
-      // Ignore the first mutate, as it's caused by the page initial page start up a few lines up.
-      if (this.hasMutated) {
-        debounce(200, this.renderRatings.bind(this));
-      } else this.hasMutated = true;
-    });
-
-    const config: MutationObserverInit = { childList: true, subtree: true };
-    this.observer.observe(this.iframe.contentDocument.body, config);
-
-    // Receive the lookups and display them.
-    this.listenerRef = (ratingsList: profRating[]): void => this.displayRatings(ratingsList, this.profNodeList);
-    chrome.runtime.onMessage.addListener(this.listenerRef as EventListener);
   }
 
   stop(): void {

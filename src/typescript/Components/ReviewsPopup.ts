@@ -5,6 +5,7 @@ import interact from 'interactjs';
 
 class ReviewsPopup {
   profId: string;
+  listenerRef: Function;
 
   constructor(profId: string) {
     console.log('Starting ReviewsPopup');
@@ -29,6 +30,11 @@ class ReviewsPopup {
     `;
 
     this.fetchProfReviews(profId);
+
+    this.listenerRef = ({ type, data }): void => {
+      if (type === 'profReviews') console.log(data.profReviews);
+    };
+    chrome.runtime.onMessage.addListener(this.listenerRef as EventListener);
   }
 
   fetchProfReviews(profId: string): void {
@@ -37,6 +43,11 @@ class ReviewsPopup {
 
   update(profId: string): void {
     console.log('Updating ReviewsPopup');
+
+    // BUG: If the user requests reviews of many diff profs in quick succession
+    // Request new prof reviews and update everything.
+    this.fetchProfReviews(profId);
+
     this.profId = profId;
   }
 
