@@ -194,7 +194,7 @@ function sendProfReviews(profId: string, tabId: number): void {
           // Add it to the cache
           newCachedProfReviews[profId] = {
             creationTime: Date.now(),
-            currReviewsList,
+            reviewsList: currReviewsList,
           };
           chrome.storage.local.set({ cachedProfReviews: newCachedProfReviews });
 
@@ -203,7 +203,7 @@ function sendProfReviews(profId: string, tabId: number): void {
         } else {
           // If the cache isn't stale, send the message.
           console.log('Getting reviews from cache');
-          chrome.tabs.sendMessage(tabId, { type: 'profReviews', data: { profReviews: cachedReviews } });
+          chrome.tabs.sendMessage(tabId, { type: 'profReviews', data: { profReviews: cachedReviews.reviewsList } });
         }
       } else {
         // Otherwise we need to fetch the reviews for a the profId.
@@ -212,7 +212,7 @@ function sendProfReviews(profId: string, tabId: number): void {
         // Add it to the cache
         newCachedProfReviews[profId] = {
           creationTime: Date.now(),
-          currReviewsList,
+          reviewsList: currReviewsList,
         };
         chrome.storage.local.set({ cachedProfReviews: newCachedProfReviews });
 
