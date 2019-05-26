@@ -11,11 +11,6 @@ type ratingsRequest = {
   profNames: string[];
 };
 
-type message = {
-  type: string;
-  data: {};
-};
-
 // On this page, add ratings and links
 class SearchResultsPage {
   iframe: HTMLIFrameElement;
@@ -102,12 +97,14 @@ class SearchResultsPage {
         ratingPreviewLink.addEventListener(
           'click',
           ({ target }: { target: EventTarget }): void => {
+            // TODO: Debounce this.
             if (!(target instanceof HTMLAnchorElement)) return;
-
             if (this.popupRef) {
-              this.popupRef.update(target.dataset.profId);
+              const profName = (target.parentElement.parentElement.parentElement.parentElement.children[4] as HTMLSpanElement).innerText;
+              this.popupRef.update(profName, target.dataset.profId);
             } else {
-              this.popupRef = new ReviewsPopup(target.dataset.profId);
+              const profName = (target.parentElement.parentElement.parentElement.parentElement.children[4] as HTMLSpanElement).innerText;
+              this.popupRef = new ReviewsPopup(this.iframe, profName, target.dataset.profId);
             }
           },
         );
