@@ -18,48 +18,53 @@ type profReview = {
 };
 
 const css = `
-#CUNYFIRST_PRO-Container {
-  position: fixed;
-  top: 0;
-  right: 10px;
-  width: 300px;
-  max-height: 500px;
-  padding: .5em 2em;
-  color: #00A58E;
-  font-family: arial;
-  box-shadow: inset 0 0 20px 5px #00A58E;
-  background: #FFF0EA;
-  border-radius: 5px;
-}
+  #CUNYFIRST_PRO-Container {
+    position: fixed;
+    top: 0;
+    right: 10px;
+    width: 300px;
+    max-height: 500px;
+    padding: .5em 2em;
+    color: #00A58E;
+    font-family: arial;
+    box-shadow: inset 0 0 20px 5px #00A58E;
+    background: #FFF0EA;
+    border-radius: 5px;
+  }
 
-#CUNYFIRST_PRO-Header {
-  width: 100%;
-  text-align: center;
-  font-size: 1.5em;
-  font-weight: bold;
-  height: 3em;
-}
+  #CUNYFIRST_PRO-Header {
+    width: 100%;
+    text-align: center;
+    font-size: 1.5em;
+    font-weight: bold;
+    height: 3em;
+  }
 
-#CUNYFIRST_PRO-Header h1 {
-  margin: 0;
-  font-size: 1.2em;
-}
+  #CUNYFIRST_PRO-Header h1 {
+    margin: 0;
+    font-size: 1.2em;
+  }
 
-#CUNYFIRST_PRO-Header button {
-  position: absolute;
-  top: 0;
-  right: 0;
-  outline: none;
-  padding: 0;
-  background: #ca3c3c;
-  font-size: 1.5em;
-  height: 30px;
-  color: white;
-  border: none;
-  width: 30px;
-  line-height: 30px;
-  cursor: pointer;
-}
+  #CUNYFIRST_PRO-Header button {
+    position: absolute;
+    top: 0;
+    right: 0;
+    outline: none;
+    padding: 0;
+    background: #ca3c3c;
+    font-size: 1.5em;
+    height: 30px;
+    color: white;
+    border: none;
+    width: 30px;
+    line-height: 30px;
+    cursor: pointer;
+  }
+
+  #CUNYFIRST_PRO-Content {
+    max-height: 400px;
+    overflow-y: scroll;
+  }
 `;
 
 class ReviewsPopup {
@@ -127,8 +132,35 @@ class ReviewsPopup {
     if (!this.containerRef) return;
     console.log('Adding new info to popup');
     this.containerRef.firstElementChild.firstElementChild.innerHTML = this.profName;
+    
+    const fragment: DocumentFragment = document.createDocumentFragment();
+    profReviews.forEach(review => {
+      const reviewContainer: HTMLElement = document.createElement('article');
+      const aside: HTMLElement = document.createElement('aside');
+      const overallRating: HTMLElement = document.createElement('h2');
+      overallRating.innerText = review.rOverallString;
+      aside.appendChild(overallRating);
+      const classTaken: HTMLElement = document.createElement('h4');
+      classTaken.innerText = `Class: ${review.rClass}`;
+      aside.appendChild(classTaken);
+      const difficulty: HTMLElement = document.createElement('h4');
+      difficulty.innerText = `Difficulty: ${review.rEasyString}`;
+      aside.appendChild(difficulty);
+      const wouldTakeAgain: HTMLElement = document.createElement('h4');
+      wouldTakeAgain.innerText = `Would take again? ${review.rWouldTakeAgain}`;
+      aside.appendChild(wouldTakeAgain);
+      reviewContainer.appendChild(aside);
+      const main: HTMLElement = document.createElement('main');
+      main.innerText = review.rComments;
+      reviewContainer.appendChild(main);
+      fragment.appendChild(reviewContainer);
+    });
+    
+    const section: HTMLElement = this.iframe.contentDocument.getElementById('CUNYFIRST_PRO-Content');
+    section.innerHTML = ''; // Remove anything that was there before
+    section.appendChild(fragment);
   }
-
+  
   fetchProfReviews(profId: string): void {
     chrome.runtime.sendMessage({ type: 'getProfReviews', data: { profId } });
   }
