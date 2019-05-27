@@ -3,18 +3,13 @@
 
   "name": "CUNYFirst Pro",
   "description": "Adds useful features to the CUNYFirst class selection website.",
-  "version": "1",
+  "version": "1.1",
 
   "icons": {
     "16": "logo-16x16.jpg",
     "48": "logo-48x48.jpg",
     "64": "logo-64x64.jpg",
     "128": "logo-128x128.jpg"
-  },
-
-  "options_ui": {
-    "page": "options.html",
-    "chrome_style": true
   },
   
   "content_scripts": [
@@ -32,8 +27,12 @@
 
   "permissions": [
     "storage",
-    "declarativeContent",
     "tabs",
-    "<all_urls>"
+    "http://home.cunyfirst.cuny.edu/*",
+    "https://home.cunyfirst.cuny.edu/*",
+    "http://ratemyprofessors.com/*",
+    "https://ratemyprofessors.com/*",
+    "http://solr-aws-elb-production.ratemyprofessors.com/*",
+    "https://solr-aws-elb-production.ratemyprofessors.com/*"
   ]
 }

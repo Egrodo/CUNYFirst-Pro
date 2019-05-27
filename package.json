@@ -13,9 +13,6 @@
   "repository": {
     "type": "git"
   },
-  "dependencies": {
-    "interactjs": "^1.4.0-rc.13"
-  },
   "devDependencies": {
     "@types/chrome": "~0.0.83",
     "copy-webpack-plugin": "^5.0.3",

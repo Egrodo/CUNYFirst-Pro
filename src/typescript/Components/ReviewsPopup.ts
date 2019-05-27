@@ -81,6 +81,11 @@ class ReviewsPopup {
     console.log('Closing popup');
    
     if (this.containerRef) {
+      try {
+        this.iframe.contentDocument.body.removeChild(this.containerRef);
+      } catch(err) {
+        console.log('Container is already removed from the body, no need to remove again.');
+      }
       this.containerRef = null;
     }
   }
