@@ -22,14 +22,18 @@ const css = `
     position: fixed;
     top: 0;
     right: 10px;
-    width: 300px;
+    max-width: 500px;
     max-height: 500px;
-    padding: .5em 2em;
+    padding: 1em 2em;
     color: #00A58E;
     font-family: arial;
-    box-shadow: inset 0 0 20px 5px #00A58E;
+    box-shadow: inset 0 0 20px 5px #3065c5;
     background: #FFF0EA;
     border-radius: 5px;
+  }
+
+  #CUNYFIRST_PRO-Content::-webkit-scrollbar, #CUNYFIRST_PRO-Content::-webkit-scrollbar-thumb, #CUNYFIRST_PRO-Content::-webkit-scrollbar-corner {
+    background-color: transparent;
   }
 
   #CUNYFIRST_PRO-Header {
@@ -41,8 +45,14 @@ const css = `
   }
 
   #CUNYFIRST_PRO-Header h1 {
+    color: #5555cd;
     margin: 0;
     font-size: 1.2em;
+  }
+
+  #CUNYFIRST_PRO-Header h2 {
+    margin: 0;
+    font-size: .8em;
   }
 
   #CUNYFIRST_PRO-Header button {
@@ -65,6 +75,60 @@ const css = `
     max-height: 400px;
     overflow-y: scroll;
   }
+
+  #CUNYFIRST_PRO-Content h2, #CUNYFIRST_PRO-Content h4 {
+    margin: 0;
+  }
+
+  #CUNYFIRST_PRO-Content article {
+    display: grid;
+    grid-template-columns: 0.5fr 1.5fr;
+    grid-template-rows: 1fr;
+    grid-template-areas: ". .";
+    
+    max-height: 150px;
+    margin-bottom: 2em;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+  }
+
+  #CUNYFIRST_PRO-Content article aside {
+    padding: .5em;
+  }
+
+  #CUNYFIRST_PRO-Content article aside h2 {
+    font-size: 1.2em;
+    margin-bottom: .5em;
+  }
+
+  #CUNYFIRST_PRO-Content article aside h4 {
+    font-size: .75em;
+  }
+
+  #CUNYFIRST_PRO-Content article aside h4:not(first-of-type) {
+    margin-top: .5em;
+  }
+
+  #CUNYFIRST_PRO-Content article main {
+    margin-top: .5em;
+    overflow: scroll;
+    text-indent: 1em;
+  }
+  
+  #CUNYFIRST_PRO-Content article main::-webkit-scrollbar {
+    width: 8px;
+    background-color: transparent;
+  }
+  
+  #CUNYFIRST_PRO-Content article main::-webkit-scrollbar-thumb {
+    background-color: gray;
+    border-radius: 15px;
+  }
+  
+  #CUNYFIRST_PRO-Content article main::-webkit-scrollbar-corner {
+    background-color: transparent;
+  }
+  
 `;
 
 class ReviewsPopup {
@@ -103,7 +167,10 @@ class ReviewsPopup {
         closeBtn.addEventListener('click', this.closePopup.bind(this));
         const headerText: HTMLElement = document.createElement('h1');
         headerText.innerText = this.profName;
+        const headerUndertext: HTMLElement = document.createElement('h2');
+        headerUndertext.innerText = 'Reviews';
         header.appendChild(headerText);
+        header.appendChild(headerUndertext);
         header.appendChild(closeBtn);
       const section: HTMLElement = document.createElement('section');
       section.id = 'CUNYFIRST_PRO-Content';
@@ -138,16 +205,17 @@ class ReviewsPopup {
       const reviewContainer: HTMLElement = document.createElement('article');
       const aside: HTMLElement = document.createElement('aside');
       const overallRating: HTMLElement = document.createElement('h2');
-      overallRating.innerText = review.rOverallString;
+      overallRating.innerText = `Overall: ${Math.round(Number(review.rOverallString))}/5`;
+      overallRating.style.color = '#ff4444';
       aside.appendChild(overallRating);
       const classTaken: HTMLElement = document.createElement('h4');
       classTaken.innerText = `Class: ${review.rClass}`;
       aside.appendChild(classTaken);
       const difficulty: HTMLElement = document.createElement('h4');
-      difficulty.innerText = `Difficulty: ${review.rEasyString}`;
+      difficulty.innerText = `Difficulty: ${Math.round(Number(review.rEasyString))}/5`;
       aside.appendChild(difficulty);
       const wouldTakeAgain: HTMLElement = document.createElement('h4');
-      wouldTakeAgain.innerText = `Would take again? ${review.rWouldTakeAgain}`;
+      wouldTakeAgain.innerText = `Would take again: ${review.rWouldTakeAgain}`;
       aside.appendChild(wouldTakeAgain);
       reviewContainer.appendChild(aside);
       const main: HTMLElement = document.createElement('main');
@@ -177,7 +245,7 @@ class ReviewsPopup {
   stop(): void {
     console.log('Stopping ReviewsPopup');
     // Remove the DOM stuff
-    this.iframe.contentDocument.body.removeChild(this.containerRef);
+    if (this.containerRef) this.iframe.contentDocument.body.removeChild(this.containerRef);
     this.containerRef = null;
   }
 }

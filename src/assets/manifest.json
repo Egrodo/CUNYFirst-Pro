@@ -2,8 +2,8 @@
   "manifest_version": 2,
 
   "name": "CUNYFirst Pro",
-  "description": "Adds useful features to the CUNYFirst / Global Search class selection websites.",
-  "version": "0.1",
+  "description": "Adds useful features to the CUNYFirst class selection website.",
+  "version": "0.5",
 
   "options_ui": {
     "page": "options.html",

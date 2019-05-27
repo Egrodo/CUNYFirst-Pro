@@ -86,7 +86,7 @@ class SearchResultsPage {
       // If the rating for this prof is known, create the rating span.
       if (ratingsList[i].rating) {
         const ratingSpan: HTMLSpanElement = document.createElement('span');
-        ratingSpan.innerText = ratingsList[i].rating;
+        ratingSpan.innerText = `${ratingsList[i].rating}/5`;
 
         const middleBreak: Text = document.createTextNode(' | ');
 
