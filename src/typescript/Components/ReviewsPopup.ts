@@ -48,7 +48,6 @@ class ReviewsPopup {
 
   createPopup(): void {
     console.log('Creating popup');
-    // TODO: Do all this in a fragment too.
 
     this.containerRef = document.createElement('aside');
     this.containerRef.id = 'CUNYFIRST_PRO-Container';
@@ -70,8 +69,9 @@ class ReviewsPopup {
       this.containerRef.appendChild(section);
 
     this.iframe.contentDocument.body.appendChild(this.containerRef);
+    this.containerRef.focus(); // Give it focus so user can scroll it without clicking.
 
-    const style = document.createElement('style');
+    const style: HTMLStyleElement = document.createElement('style');
     style.type = "text/css"
     style.innerText = css;
 
@@ -81,9 +81,11 @@ class ReviewsPopup {
 
   closePopup(): void {
     console.log('Closing popup');
-  
-    this.iframe.contentDocument.body.removeChild(this.containerRef);
-    this.containerRef = null;
+   
+    if (this.containerRef) {
+      this.iframe.contentDocument.body.removeChild(this.containerRef);
+      this.containerRef = null;
+    }
   }
 
   updatePopup(profReviews: profReview[]) {
@@ -117,9 +119,9 @@ class ReviewsPopup {
     });
     
     if (this.remaining > 0) {
-      const remainingContainer = document.createElement('div');
+      const remainingContainer: HTMLDivElement = document.createElement('div');
       remainingContainer.id = 'CUNYFIRST_PRO-RemainingContainer';
-        const remainingLink = document.createElement('a');
+        const remainingLink: HTMLAnchorElement = document.createElement('a');
         remainingLink.href = `https://www.ratemyprofessors.com/ShowRatings.jsp?tid=${this.profId}`;
         remainingLink.target = '_blank';
         remainingLink.rel = 'noopener noreferrer';
@@ -131,6 +133,10 @@ class ReviewsPopup {
     const section: HTMLElement = this.iframe.contentDocument.getElementById('CUNYFIRST_PRO-Content');
     section.innerHTML = ''; // Remove anything that was there before
     section.appendChild(fragment);
+
+    // Once it's appended, scroll back to the top if not already
+    section.scrollTop = 0;
+
   }
   
   fetchProfReviews(profId: string): void {
@@ -149,7 +155,7 @@ class ReviewsPopup {
   stop(): void {
     console.log('Stopping ReviewsPopup');
     // Remove the DOM stuff if it's still there for some reason.
-    if (this.containerRef) this.closePopup();
+    this.closePopup();
   }
 }
 

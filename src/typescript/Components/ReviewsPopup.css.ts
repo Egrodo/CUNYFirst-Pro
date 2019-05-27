@@ -55,6 +55,7 @@ export default `
   #CUNYFIRST_PRO-Content {
     max-height: 400px;
     overflow-y: scroll;
+    scroll-behavior: smooth;
   }
 
   #CUNYFIRST_PRO-Content h2, #CUNYFIRST_PRO-Content h4 {
