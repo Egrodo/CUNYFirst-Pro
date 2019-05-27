@@ -97,7 +97,6 @@ class SearchResultsPage {
         ratingPreviewLink.addEventListener(
           'click',
           ({ target }: { target: EventTarget }): void => {
-            // TODO: Debounce this.
             if (!(target instanceof HTMLAnchorElement)) return;
             if (this.popupRef) {
               const profName = (target.parentElement.parentElement.parentElement.parentElement.children[4] as HTMLSpanElement).innerText;
@@ -118,6 +117,8 @@ class SearchResultsPage {
         const middleBreak: Text = document.createTextNode(' | ');
         const ratingPreviewLink: HTMLAnchorElement = document.createElement('a');
         ratingPreviewLink.href = 'https://www.ratemyprofessors.com/teacher/create';
+        ratingPreviewLink.target = '_blank';
+        ratingPreviewLink.rel = 'noopener noreferrer';
         ratingPreviewLink.innerText = 'Add a review?';
 
         td.children[0].children[0].appendChild(ratingSpan);
@@ -133,7 +134,7 @@ class SearchResultsPage {
       const th = document.createElement('th') as HTMLTableHeaderCellElement;
       th.className = 'PSLEVEL1GRIDCOLUMNHDR';
       th.setAttribute('scope', 'col');
-      th.setAttribute('width', '120');
+      th.setAttribute('width', '130');
       th.setAttribute('align', 'left');
       th.setAttribute('abbr', 'Rating');
       th.appendChild(document.createElement('span'));

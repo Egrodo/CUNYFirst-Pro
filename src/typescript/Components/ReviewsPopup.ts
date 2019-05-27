@@ -1,4 +1,3 @@
-import interact from 'interactjs';
 import css from './ReviewsPopup.css';
 
 // This component controls the popup box that shows the user professor reviews when they click on the preview button
@@ -75,7 +74,6 @@ class ReviewsPopup {
     style.type = "text/css"
     style.innerText = css;
 
-    // TODO: Give this loading spinners before content is filled in.
     this.iframe.contentDocument.body.appendChild(style);
   }
 
@@ -83,7 +81,6 @@ class ReviewsPopup {
     console.log('Closing popup');
    
     if (this.containerRef) {
-      this.iframe.contentDocument.body.removeChild(this.containerRef);
       this.containerRef = null;
     }
   }
@@ -99,7 +96,7 @@ class ReviewsPopup {
       const reviewContainer: HTMLElement = document.createElement('article');
       const aside: HTMLElement = document.createElement('aside');
       const overallRating: HTMLElement = document.createElement('h2');
-      overallRating.innerText = `Overall: ${Math.round(Number(review.rOverallString))}/5`;
+      overallRating.innerText = `Rating: ${Math.round(Number(review.rOverallString))}/5`;
       overallRating.style.color = '#ff4444';
       aside.appendChild(overallRating);
       const classTaken: HTMLElement = document.createElement('h4');
