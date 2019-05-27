@@ -142,10 +142,11 @@ type profReviewsCache = {
   [profId: string]: {
     creationTime: number;
     currReviewsList: profReview[];
+    remaining: number;
   };
 };
 
-const fetchProfReviews = async (profId: string): Promise<profReview[]> => {
+const fetchProfReviews = async (profId: string): Promise<[profReview[], number]> => {
   try {
     console.log(`Getting reviews for ${profId} from RMP...`);
     const url = `https://www.ratemyprofessors.com/paginate/professors/ratings?tid=${profId}&max=10&cache=true`;
@@ -168,10 +169,9 @@ const fetchProfReviews = async (profId: string): Promise<profReview[]> => {
     }));
 
     console.log('Success');
-    return reviews;
+    return [reviews, data.remaining];
   } catch (err) {
-    console.error(err);
-    return [];
+    throw new Error(err);
   }
 };
 
@@ -189,35 +189,37 @@ function sendProfReviews(profId: string, tabId: number): void {
         if (Date.now() - cachedReviews.creationTime > 5184000) {
           console.log('Cache needs refreshing.');
           // Otherwise we need to fetch the reviews for a the profId.
-          const currReviewsList: profReview[] = await fetchProfReviews(profId);
+          const [currReviewsList, remaining]: [profReview[], number] = await fetchProfReviews(profId);
 
           // Add it to the cache
           newCachedProfReviews[profId] = {
             creationTime: Date.now(),
             reviewsList: currReviewsList,
           };
+
           chrome.storage.local.set({ cachedProfReviews: newCachedProfReviews });
 
           // Send the data.
-          chrome.tabs.sendMessage(tabId, { type: 'profReviews', data: { profReviews: currReviewsList } });
+          chrome.tabs.sendMessage(tabId, { type: 'profReviews', data: { profReviews: currReviewsList, remaining } });
         } else {
           // If the cache isn't stale, send the message.
           console.log('Getting reviews from cache');
-          chrome.tabs.sendMessage(tabId, { type: 'profReviews', data: { profReviews: cachedReviews.reviewsList } });
+          const { reviewsList, remaining }: profReviewsCache = cachedReviews;
+          chrome.tabs.sendMessage(tabId, { type: 'profReviews', data: { profReviews: reviewsList, remaining } });
         }
       } else {
-        // Otherwise we need to fetch the reviews for a the profId.
-        const currReviewsList: profReview[] = await fetchProfReviews(profId);
+        const [currReviewsList, remaining]: [profReview[], number] = await fetchProfReviews(profId);
 
         // Add it to the cache
         newCachedProfReviews[profId] = {
           creationTime: Date.now(),
           reviewsList: currReviewsList,
+          remaining,
         };
         chrome.storage.local.set({ cachedProfReviews: newCachedProfReviews });
 
         // Send the data.
-        chrome.tabs.sendMessage(tabId, { type: 'profReviews', data: { profReviews: currReviewsList } });
+        chrome.tabs.sendMessage(tabId, { type: 'profReviews', data: { profReviews: currReviewsList, remaining } });
       }
     },
   );

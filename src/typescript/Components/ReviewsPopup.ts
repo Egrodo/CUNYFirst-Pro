@@ -1,10 +1,9 @@
 import interact from 'interactjs';
-import { debounce } from '../helpers';
-
 // This component controls the popup box that shows the user professor reviews when they click on the preview button
 
 type reviewResponse = {
   profReviews: profReview[];
+  remaining: number;
 }
 
 type profReview = {
@@ -128,20 +127,39 @@ const css = `
   #CUNYFIRST_PRO-Content article main::-webkit-scrollbar-corner {
     background-color: transparent;
   }
+
+  #CUNYFIRST_PRO-RemainingContainer {
+    width: 100%;
+    text-align: center;
+    height: 2em;
+  }
   
+  #CUNYFIRST_PRO-RemainingContainer a {
+    text-decoration: none;
+    font-size: 1.1em;
+    color: #5555cd;
+  }
+  
+  #CUNYFIRST_PRO-RemainingContainer a:hover {
+    text-decoration: underline;
+  }
+
+  #CUNYFIRST_PRO-RemainingContainer a:visited {
+    color: #5555cd;
+  }
 `;
 
 class ReviewsPopup {
   iframe: HTMLIFrameElement;
   profName: string;
   profId: string;
+  remaining: number;
   listenerRef: Function;
   containerRef: HTMLElement | null;
 
   constructor(iframe: HTMLIFrameElement, profName: string, profId: string) {
     console.log('Starting ReviewsPopup');
     this.iframe = iframe;
-    console.log(this.iframe);
     this.profName = profName;
     this.profId = profId;
     this.containerRef = null;
@@ -150,7 +168,10 @@ class ReviewsPopup {
     this.createPopup();
 
     this.listenerRef = ({ type, data }: { type: string, data: reviewResponse }): void => {
-      if (type === 'profReviews') this.updatePopup(data.profReviews);
+      if (type === 'profReviews') {
+        this.remaining = data.remaining;
+        this.updatePopup(data.profReviews);
+      }
     };
 
     chrome.runtime.onMessage.addListener(this.listenerRef as EventListener);
@@ -158,6 +179,8 @@ class ReviewsPopup {
 
   createPopup(): void {
     console.log('Creating popup');
+    // TODO: Do all this in a fragment too.
+
     this.containerRef = document.createElement('aside');
     this.containerRef.id = 'CUNYFIRST_PRO-Container';
       const header: HTMLElement = document.createElement('header');
@@ -224,6 +247,18 @@ class ReviewsPopup {
       fragment.appendChild(reviewContainer);
     });
     
+    if (this.remaining > 0) {
+      const remainingContainer = document.createElement('div');
+      remainingContainer.id = 'CUNYFIRST_PRO-RemainingContainer';
+        const remainingLink = document.createElement('a');
+        remainingLink.href = `https://www.ratemyprofessors.com/ShowRatings.jsp?tid=${this.profId}`;
+        remainingLink.target = '_blank';
+        remainingLink.rel = 'noopener noreferrer';
+        remainingLink.innerText = 'See More Reviews';
+      remainingContainer.appendChild(remainingLink);  
+      fragment.appendChild(remainingContainer);
+    }
+
     const section: HTMLElement = this.iframe.contentDocument.getElementById('CUNYFIRST_PRO-Content');
     section.innerHTML = ''; // Remove anything that was there before
     section.appendChild(fragment);
@@ -244,9 +279,8 @@ class ReviewsPopup {
 
   stop(): void {
     console.log('Stopping ReviewsPopup');
-    // Remove the DOM stuff
-    if (this.containerRef) this.iframe.contentDocument.body.removeChild(this.containerRef);
-    this.containerRef = null;
+    // Remove the DOM stuff if it's still there for some reason.
+    if (this.containerRef) this.closePopup();
   }
 }
 

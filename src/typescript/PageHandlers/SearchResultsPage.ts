@@ -84,7 +84,7 @@ class SearchResultsPage {
       td.children[0].children[0].className = 'PSLONGEDITBOX CUNYFIRSTPRO_ADDON';
 
       // If the rating for this prof is known, create the rating span.
-      if (ratingsList[i].rating) {
+      if (ratingsList[i].rating !== 'Unknown' && ratingsList[i].rating !== 'No data') {
         const ratingSpan: HTMLSpanElement = document.createElement('span');
         ratingSpan.innerText = `${ratingsList[i].rating}/5`;
 
