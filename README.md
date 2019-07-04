@@ -7,3 +7,5 @@ Features include:
    - Showing a friendly popup upon clicking "See Reviews" that allows you to preview the reviews for any given professor, without leaving the site!
    - Uses a background script to cache reviews and ratings for a faster user experience.
    - Gathers absolutely zero information on you and is completely open source (https://github.com/Egrodo/CUNYFirst-Pro)
+   
+Download it here! https://chrome.google.com/webstore/detail/cunyfirst-pro/cnbdilibjlibnkjdgomnmncidojofmcf
